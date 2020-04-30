@@ -157,15 +157,15 @@ _______________________
 
 #### Install Docker application to personal machine
 
-Install Docker application from the Docker website https://hub.docker.com/editions/community/docker-ce-desktop-mac/. Click blue box with 'Get Docker' text. This will download a Docker.dmg file. Upon opening the disk image (.dmg) file, you will be asked to drag the Docker App icon into your Applications. 
+Install Docker application from the Docker website https://hub.docker.com/editions/community/docker-ce-desktop-mac/. Click blue box with 'Get Docker' text. This will download a Docker.dmg file. Upon opening the disk image (.dmg) file, you will be asked to drag the Docker App icon into your Applications.
 
 #### Open Docker
-Go to your Applications folder and double click 'Docker' to open the program. Once you see a whale image in your upper bar, Docker is running. You may now close the pop-up window, Docker will continue to run in the background. 
+Go to your Applications folder and double click 'Docker' to open the program. Once you see a whale image in your upper bar, Docker is running. You may now close the pop-up window, Docker will continue to run in the background.
 
 #### Download the GitHub repository.
-**Note:** Since this is unpublished data, we have not opened the repository to the public. For this reason, the typical download process throguh `git clone` is not available to those that are not listed as collaborators. Instead, non-collaborators must follow the steps listed below. If you wish to be listed as a collaborator, please provide me (A. Pendleton) your GitHub username. 
+**Note:** Since this is unpublished data, we have not opened the repository to the public. For this reason, the typical download process throguh `git clone` is not available to those that are not listed as collaborators. Instead, non-collaborators must follow the steps listed below. If you wish to be listed as a collaborator, please provide me (A. Pendleton) your GitHub username.
 
-In the GitHub repository, click the green button 'Clone or Download Repository'. A new window will appear, click 'Download Zip'. 
+In the GitHub repository, click the green button 'Clone or Download Repository'. A new window will appear, click 'Download Zip'.
 
 In Finder, navigate to where you'd like to put the repository. For example, I have created a directory in my 'Documents' folder named 'GitHub', which I could drag the zipped folder from my 'Downloads' into the `GitHub` folder.
 
@@ -175,11 +175,11 @@ In the example above, my path to the cloned respository is below (which you will
 ```
 
 #### Build Docker image of GitHub repository.
-Open 'Terminal' on your machine. 
+Open 'Terminal' on your machine.
 
 Navigate to the GitHub repository. For me, the command was:
 ```
-cd /Users/wisecaver-amanda/Documents/GitHub/ME034V_coexp_development-master 
+cd /Users/wisecaver-amanda/Documents/GitHub/ME034V_coexp_development-master
 ```
 
 Run the build step:
@@ -202,16 +202,16 @@ Now we will run the docker image of the repository, by putting the following com
 docker run -p 8866:8866 --mount type=bind,src=<path_to_repo>,target=/home/jovyan/depot coexp1
 ```
 
-  where `8866` is the port of connection, `src` is the path to the repository that was used in the step above, target *does not need to be changed*, and `coexp1` is the name we gave the build in the step above. 
-  
+  where `8866` is the port of connection, `src` is the path to the repository that was used in the step above, target *does not need to be changed*, and `coexp1` is the name we gave the build in the step above.
+
 For example, the code I ran was:
 ```
 docker run -p 8866:8866 --mount type=bind,src=/Users/wisecaver-amanda/Documents/GitHub/ME034V_coexp_development-master/,target=/home/jovyan/depot coexp1
 
 ```
-  
+
 #### Run the notebook (using internet browser)
-Open your internet browser of choice (*e.g.* Safari, Chrome, etc.) and type in the following text into your URL space and hit Enter. The website should open for you. 
+Open your internet browser of choice (*e.g.* Safari, Chrome, etc.) and type in the following text into your URL space and hit Enter. The website should open for you.
 
 ```
 http://localhost:8866/
@@ -219,33 +219,43 @@ http://localhost:8866/
 
 _______________________
 
-### Linux systems
+### Docker Overview
 
-#### Install Docker on Linux
-Linux (example):
+#### Install Docker
+This is specific to your operating system. On Debian-based Linux systems, for example, you would enter...
 ```
 apt install docker.io
 ```
 
 #### Build the image
-
+Run...
 ```
-docker build -t coexp1 <path_to_Dockerfile>
+docker build -t coexp1 --build-arg repourl=https://<user>:<pass>@github.com/<full_repo_path> --build-arg repodir=<repo_name> <path_to_Dockerfile>
 ```
+...by substitute the following...
+```
+<user>              : Your github.com user name  (ex. "rcpurdue")
+<pass>              : Your github.com password   (ex. "MyPassw0rd1%21")
+<full_repo_path>    : Repo's path on github.com  (ex. "pendlea/ME034V_coexp_development.git")
+<repo_name>         : Name of repo on github.com (ex. "ME034V_coexp_development")
+<path_to_Dockerfile>: Local path to Dockerfile   (ex. ".")
+```
+NOTE: Your github.com user ID and password must be precent-encoded!
+You must substitute precent values for special characters in your user user ID and password.
+For example, "MyPassw0rd1!" becomes "MyPassw0rd1%21" ("!" changes to "%21").
+See https://en.wikipedia.org/wiki/Percent-encoding for conversions.
 
 #### Run the image
 
 ```
-docker run -p 8866:8866 --mount type=bind,src=<path_to_repo>,target=/home/jovyan/depot coexp1
+docker run -p 8866:8866 coexp1
 ```
 
-#### Run the notebook (using internet browser)
+#### Run the notebook (using Internet browser)
 
 ```
 http://localhost:8866/
 ```
-
-
 
 
 
