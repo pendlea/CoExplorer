@@ -1,10 +1,10 @@
 FROM jupyter/scipy-notebook
-
+ARG repourl
+ARG repodir
 RUN    conda install -c conda-forge 'voila'        \
     && conda install -c plotly      'plotly=4.5.0' \
     && conda clean --all -f -y                     \
-    && mkdir ~/depot
-
-WORKDIR depot
-
+    && git clone --depth 1 $repourl                \
+    && gunzip $repodir/Genes_expression.txt.gz
+WORKDIR $repodir
 CMD ["voila","--no-browser","coexp.ipynb"]
