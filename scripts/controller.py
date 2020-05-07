@@ -13,7 +13,7 @@ class Controller:
     VALUE = 'value' # for observe calls
 
     def __init__(self):
-        self.debugging     = False # NOTE Change to False to hide debug output
+        self.debugging     = True # NOTE Change to False to hide debug output
         self.debug_buffer  = []
         self.display_ready = False
 
@@ -56,6 +56,17 @@ class Controller:
 
             for button in item:
                 button.on_click(self.three_state_pressed)
+
+        self.view.filter_btn_refexp.on_click(self.fill_export)
+
+    def fill_export(self,change):
+        # Generate output file
+        self.view.filter_out_export.clear_output()
+        self.debug('fill_export()')
+
+        if self.model.filter_results:
+            self.debug('fill_export() has filter results')
+            self.model.write_filtered_data(self.view.filter_out_export) # TODO Remove param when file download supported
 
     def three_state_pressed(self,button):
         '''React to user pressing a 3-state button in fitler'''
@@ -129,22 +140,25 @@ class Controller:
         target_ids = self.model.translate_genes(gene_ids,func_ids)
         self.debug('Searching for '+str(len(target_ids))+' IDs; first few: '+str(target_ids[:10]))
 
+        perform_search = True
+
         if not target_ids:
-            self.debug('WARNING: Considering ALL genes.')
 
-        # Perform seach - either terms were left empty (user wants full results) or at least one Sevir ID is available
+            if len(gene_ids) > 0 or len(func_ids) > 0: # Did user specify gene(s) or funtion(s)?
+                perform_search = False
+                self.debug('Translation failed.')
+            else:
+                self.debug('WARNING: Considering ALL genes.')
 
-        # Get thresholds from from UI
-        tpm_thresh  = float(self.view.filter_txt_tpm.value )
-        pval_thresh = float(self.view.filter_txt_pval.value)
-        fdr_thresh  = float(self.view.filter_txt_fdr.value )
+        if perform_search: # Either terms were left empty (user wants full results) or at least one Sevir ID is available
 
-        # Search for valid data, (results stored in model)
-        self.model.search(target_ids,tpm_thresh,pval_thresh,fdr_thresh)
+            # Get thresholds from from UI
+            tpm_thresh  = float(self.view.filter_txt_tpm.value )
+            pval_thresh = float(self.view.filter_txt_pval.value)
+            fdr_thresh  = float(self.view.filter_txt_fdr.value )
 
-        # Generate output file
-        if self.model.filter_results:
-            self.model.write_filtered_data(self.view.filter_out_export) # TODO Remove param when file download supported
+            # Search for valid data, (results stored in model)
+            self.model.search(target_ids,tpm_thresh,pval_thresh,fdr_thresh)
 
         # Refresh output widgets
         self.refresh_filter_output()

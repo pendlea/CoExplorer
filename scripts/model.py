@@ -339,9 +339,13 @@ class Model:
     def write_filtered_data(self,output_widget):
         '''Dump filtered gene data to output widget for export'''
 
+        self.ctrl.debug('write_filtered_data()')
+
         with output_widget:
             print(self.HEADER_FLAG+self.HEADER_FLAG+self.OUTPUT_FORMAT_HEADER)
             print(self.HEADER_FLAG+self.GENE_ID+'\t'.join(self.cond))
+
+            self.ctrl.debug('write_filtered_data() started output')
 
             for gene_id,parsed_row in self.filter_results.items():
                 line = gene_id
@@ -350,6 +354,8 @@ class Model:
                     line += '\t' + ','.join(record)
 
                 print(line)
+
+        self.ctrl.debug('write_filtered_data() end output')
 
         # TODO Save for when file download is supported
         #'''Dump filtered gene data to output file for download'''
@@ -452,7 +458,7 @@ class Model:
 
             try:
                 raw = subprocess.check_output([self.GREP_CMD] + args + [search_file])
-                self.ctrl.debug('grep_lookup(): raw = "'+str(raw)+'"')
+                #self.ctrl.debug('grep_lookup(): raw = "'+str(raw)+'"')
 
                 # Pull index (1st col) out of results
                 for line in raw.decode('utf-8').split('\n'): # TODO Rely on encoding?
