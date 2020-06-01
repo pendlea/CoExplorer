@@ -10,7 +10,7 @@ from numpy import mean
 
 class Model:
 
-    REPO_ROOT      = '.'
+    DATA_DIR       = 'data'
     TEMP_ROOT      = 'temp'
     SAMPLES        = 'samples.txt'
     HOMOLOGS       = 'Genes_homologs.txt'
@@ -42,7 +42,7 @@ class Model:
     def __init__(self):
         self.view      = None
         self.ctrl      = None
-        self.root      = self.REPO_ROOT # TODO Change for production
+        self.root      = self.DATA_DIR
         self.gene      = {} # for each displayed module, store full gene list TODO This (model's .gene) unused? Remove?
         self.exps      = [] # experiment list from samples file - filled when view calls get_samples()
         self.samp_dict = {} # sample dictionary - filled when view calls get_samples()
@@ -269,7 +269,7 @@ class Model:
                     print('\t'.join(output_fields))
 
                 # Add to return values (for select widget)
-                disp_data.append(output_fields)              # Data user will see
+                disp_data.append(output_fields[:-1]) # Data user will see. Hide last col, tho is used in export/download
                 value_data.append((line[0],list(recovered))) # Data used if line is selected for network plotting
 
         return (disp_data,value_data)
@@ -279,11 +279,10 @@ class Model:
 
     def search(self,target_ids,tpm_thresh,pval_thresh,fdr_thresh):
         '''Find data for given gene(s) and condition tests, save to class properites'''
-        self.clear_filter_results() # New search so reset results
 
         # Get data for given gene IDs - FILTER 1: Valid gene?
         # Note special case (not target_ids): Here, there's no limit on genes to consider
-        for line in self.grep_lookup(target_ids,os.path.join(self.REPO_ROOT,self.EXPERIMENTS),(not target_ids)):
+        for line in self.grep_lookup(target_ids,os.path.join(self.DATA_DIR,self.EXPERIMENTS),(not target_ids)):
             try:
                 valid_row  = False # Current line passed all tests?
                 parsed_row = []   # All parsed data from current line
@@ -422,7 +421,7 @@ class Model:
         '''Grep through given file using given search term list, return list of index (1st col) values'''
         self.ctrl.debug('Reverse lookup terms "'+str(search_terms)+'" for '+search_file)
         found = []
-        args  = self.grep_args(search_terms)
+        args  = ['-i'] + self.grep_args(search_terms)
 
         if args:
 

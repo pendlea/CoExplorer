@@ -1,8 +1,8 @@
-# coexp_development.
-Development of coexpression network website
+# CoExplorer
+Development base for coexpression network exploration website
 
 
-## Input files
+## Input Files
 
 Six different input file types can be used for data propagation for Jupyter notebook website. Each of the files are listed below, with designations of whether the file is required or optional, and what each file's data is used for in the website.
 
@@ -149,114 +149,102 @@ Coming soon!! :)
 
 
 _______________________
-# INSTALLATION INSTRUCTIONS VIA DOCKER
+## Running in a Docker Container
 
-## Running in a Docker container
+### Install Docker application to personal machine.
 
-### MacOS systems
-
-#### Install Docker application to personal machine
-
+#### On MacOS systems
 Install Docker application from the Docker website https://hub.docker.com/editions/community/docker-ce-desktop-mac/. Click blue box with 'Get Docker' text. This will download a Docker.dmg file. Upon opening the disk image (.dmg) file, you will be asked to drag the Docker App icon into your Applications.
-
-#### Open Docker
 Go to your Applications folder and double click 'Docker' to open the program. Once you see a whale image in your upper bar, Docker is running. You may now close the pop-up window, Docker will continue to run in the background.
 
-#### Download the GitHub repository.
+#### On Debian-based Linux systems
+As root (sudo), enter...
+```
+apt install docker.io
+```
+
+### Download the GitHub repository.
 **Note:** Since this is unpublished data, we have not opened the repository to the public. For this reason, the typical download process throguh `git clone` is not available to those that are not listed as collaborators. Instead, non-collaborators must follow the steps listed below. If you wish to be listed as a collaborator, please provide me (A. Pendleton) your GitHub username.
 
 In the GitHub repository, click the green button 'Clone or Download Repository'. A new window will appear, click 'Download Zip'.
 
-In Finder, navigate to where you'd like to put the repository. For example, I have created a directory in my 'Documents' folder named 'GitHub', which I could drag the zipped folder from my 'Downloads' into the `GitHub` folder.
+In Finder (MacOS), navigate to where you'd like to put the repository. For example, I have created a directory in my 'Documents' folder named 'GitHub', which I could drag the zipped folder from my 'Downloads' into the `GitHub` folder.
 
 In the example above, my path to the cloned respository is below (which you will see used in steps below):
+
 ```
 /Users/wisecaver-amanda/Documents/GitHub/ME034V_coexp_development_master/
 ```
 
-#### Build Docker image of GitHub repository.
-Open 'Terminal' on your machine.
+### Build Docker image of GitHub repository.
+Open 'Terminal' on your machine. Navigate to the GitHub repository. For me, the command was:
 
-Navigate to the GitHub repository. For me, the command was:
 ```
-cd /Users/wisecaver-amanda/Documents/GitHub/ME034V_coexp_development-master
+cd /Users/wisecaver-amanda/Documents/GitHub/CoExplorer
 ```
 
 Run the build step:
+
 ```
-docker build -t coexp1 <path_to_repo>
+docker build -t <image_name> --build-arg repourl=<repository_url> --build-arg repodir=<repository_name> --build-arg repodir=<datapath> <path_to_data_files> <path_to_dockerfile>
 ```
-  where `coexp1` is the name we will call the Docker image of the repository
 
 For example, the code I ran was:
-```
-docker build -t coexp1 /Users/wisecaver-amanda/Documents/GitHub/ME034V_coexp_development-master/
-```
 
-**Note:** This step will take several minutes...
+```
+docker build -t coexp1 --build-arg repourl=https://github.com/pendlea/CoExplorer.git --build-arg repodir=CoExplorer --build-arg datapath=data .
+```
+...where:
 
-#### Run the image
+ -  "`coexp1`" is an arbitrary name we will use to identify the image that will be created.
+ -  "`https://...`" is URL for this repository.
+ -  "`CoExplorer`" is the name of this repository (and, therefore, the name of the repo's directory).
+ -  "`data`" is the local path to the directory holding the data files.
+
+**Note 1:** The latest version of the code is pulled down from the repository. Make sure to commit your local changes first.
+
+**Note 2:** This step will take several minutes.
+
+### Run the image.
 Now we will run the docker image of the repository, by putting the following command into Terminal:
 
 ```
-docker run -p 8866:8866 --mount type=bind,src=<path_to_repo>,target=/home/jovyan/depot coexp1
+docker run -p 8866:8866 <image_name>
 ```
 
-  where `8866` is the port of connection, `src` is the path to the repository that was used in the step above, target *does not need to be changed*, and `coexp1` is the name we gave the build in the step above.
+...where `8866` is the network connection port
 
 For example, the code I ran was:
+
 ```
-docker run -p 8866:8866 --mount type=bind,src=/Users/wisecaver-amanda/Documents/GitHub/ME034V_coexp_development-master/,target=/home/jovyan/depot coexp1
+docker run -p 8866:8866 coexp1
 
 ```
 
-#### Run the notebook (using internet browser)
+### Run the notebook (using internet browser)
 Open your internet browser of choice (*e.g.* Safari, Chrome, etc.) and type in the following text into your URL space and hit Enter. The website should open for you.
 
 ```
 http://localhost:8866/
 ```
 
-_______________________
+## Developing Using a Docker Container - "Dev Mode"
 
-### Docker Overview
+An alternate Dockerfile is provided to facilitate development iterations (writing code, testing, repeating) while stil leveraging Docker.
+In this scenario, the site still runs within the Docker image, however it reaches out onto the host filesystem to read the code and data.
+This allows you to make changes to the code or data and then just refresh the page in your browser to test it (rather than rebuilding the image).
 
-#### Install Docker
-This is specific to your operating system. On Debian-based Linux systems, for example, you would enter...
-```
-apt install docker.io
-```
-
-#### Build the image
-Run...
-```
-docker build -t coexp1 --build-arg repourl=https://<user>:<pass>@github.com/<full_repo_path> --build-arg repodir=<repo_name> <path_to_Dockerfile>
-```
-...by substitute the following...
-```
-<user>              : Your github.com user name  (ex. "rcpurdue")
-<pass>              : Your github.com password   (ex. "MyPassw0rd1%21")
-<full_repo_path>    : Repo's path on github.com  (ex. "pendlea/ME034V_coexp_development.git")
-<repo_name>         : Name of repo on github.com (ex. "ME034V_coexp_development")
-<path_to_Dockerfile>: Local path to Dockerfile   (ex. ".")
-```
-NOTE: Your github.com user ID and password must be precent-encoded!
-You must substitute precent values for special characters in your user user ID and password.
-For example, "MyPassw0rd1!" becomes "MyPassw0rd1%21" ("!" changes to "%21").
-See https://en.wikipedia.org/wiki/Percent-encoding for conversions.
-
-#### Run the image
+The image is built using the following command. Note that the path to the special development Dockerfile should be used (e.g. "./dev/Dockerfile").
 
 ```
-docker run -p 8866:8866 coexp1
+docker build -t <dev_image_name> <path_to_dev_dockerfile>
 ```
 
-#### Run the notebook (using Internet browser)
+Use this command to run the "dev mode" docker image:
 
 ```
-http://localhost:8866/
+docker run -p 8866:8866 --mount type=bind,src=<full_path_to_repo>,target=/home/jovyan/external <dev_image_name>
 ```
-
 
 
 

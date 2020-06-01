@@ -94,7 +94,7 @@ class View:
     PLOTCO1_TEXT_A = '''
     <p>This tab displays the co-expressed gene sets (i.e., modules) from global gene co-expression networks. Modules listed below contain one or more query genes (specified in the Filter tab).
     </p>
-    <p>Global co-expression networks were created using the Mutual Rank (MR) score first described by [Obayashi & Kinoshita](https://www.ncbi.nlm.nih.gov/pubmed/19767600). Exponential decay functions were used to create MR-transformed edge weights as described in here: https://github.rcac.purdue.edu/jwisecav/coexp-pipe and here: [Wisecaver et al. 2017 Plant Cell](http://www.plantcell.org/content/29/5/944).
+    <p>Global co-expression networks were created using the Mutual Rank (MR) score first described by <a href="https://www.ncbi.nlm.nih.gov/pubmed/19767600/" target="_blank">Obayashi & Kinoshita</a>. Exponential decay functions were used to create MR-transformed edge weights as described in here: https://github.rcac.purdue.edu/jwisecav/coexp-pipe and here: [Wisecaver et al. 2017 Plant Cell](http://www.plantcell.org/content/29/5/944).
     </p>
     <p>We impose an edge weight cutoff of ≥ 0.01 and vary the exponential decay denominator, thereby varying the number of edges (ie gene associations) retained in the networks.
     </p>
@@ -402,7 +402,8 @@ class View:
         # Module selection # TODO If using latest ver of Jupyter, consider using grid widet instead
 
         # Create a fixed width header widget that will match data widget
-        header = self.columnize(self.MODULE_HEADER[0],self.MODULE_HEADER)
+        header = [self.MODULE_HEADER[0][:-1],self.MODULE_HEADER[1][:-1]] # Hide last col, tho it is used in export/download
+        header = self.columnize(self.MODULE_HEADER[0][:-1],header)
         header = ui.Select(options=header,disabled=True,value=None,layout=ui.Layout(height='3em'))
         header.add_class('selmono') # Use JavaScript to spec fixed-width font (see custom CSS)
 

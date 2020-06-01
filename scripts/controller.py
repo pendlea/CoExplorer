@@ -13,7 +13,7 @@ class Controller:
     VALUE = 'value' # for observe calls
 
     def __init__(self):
-        self.debugging     = True # NOTE Change to False to hide debug output
+        self.debugging     = False # NOTE Change to False to hide debug output
         self.debug_buffer  = []
         self.display_ready = False
 
@@ -150,6 +150,8 @@ class Controller:
             else:
                 self.debug('WARNING: Considering ALL genes.')
 
+        self.model.clear_filter_results() # New search attempt so reset
+
         if perform_search: # Either terms were left empty (user wants full results) or at least one Sevir ID is available
 
             # Get thresholds from from UI
@@ -235,7 +237,7 @@ class Controller:
 
         # Build path to ABC file: "./Networks/Network_10/N010M00910.abc" TODO Abstract into model?
         abc_path = os.path.join(
-            self.model.REPO_ROOT              # '.'
+            self.model.DATA_DIR               # '.'
             ,self.model.NET_DIR               # 'Networks'
             ,self.view.plotco_ddn_netw.value  # 'Network_10'
             ,module + self.model.ABC_EXT      # 'N010M00910' + '.abc'
