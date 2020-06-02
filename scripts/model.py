@@ -260,6 +260,7 @@ class Model:
                     ,'{:.4f}'.format( num_qry_mod / len(qry_gen) * 100.0    ) # "% Query Genes Recovered"
                     ,','.join(        recovered                             ) # "Recovered Query Genes"
                     ,','.join(        qry_gen_set.difference(mod_gen_set)   ) # Missing query genes
+                    ,','.join(        mod_gen_set                           ) # All genes in module
                 ]
 
                 # TODO Save for when file download is supported
@@ -269,7 +270,7 @@ class Model:
                     print('\t'.join(output_fields))
 
                 # Add to return values (for select widget)
-                disp_data.append(output_fields[:-1]) # Data user will see. Hide last col, tho is used in export/download
+                disp_data.append(output_fields[:-2]) # Data user will see. Hide last col, tho is used in export/download
                 value_data.append((line[0],list(recovered))) # Data used if line is selected for network plotting
 
         return (disp_data,value_data)

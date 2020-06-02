@@ -112,8 +112,8 @@ class View:
     PLOTCO3_TEXT   = '<br><b>Select a module</b>'
     PLOT_DOWNLOAD  = 'Download Selected Plot'
     MODULE_HEADER  = [
-        ["          ","       ","           ","Genes in","Query Genes","Jaccard","% Query Genes","Recovered                      ","Missing Query                                       "],
-        ["Module    ","Quality","p-value    ","Module  ","in Module  ","Index  ","Recovered    ","Query Genes                    ","Genes                                               "]
+        ["          ","       ","           ","Genes in","Query Genes","Jaccard","% Query Genes","Recovered                      ","Missing Query                                       ","All Genes                                       "],
+        ["Module    ","Quality","p-value    ","Module  ","in Module  ","Index  ","Recovered    ","Query Genes                    ","Genes                                               ","in Module                                       "]
     ]
     MODULE_PROG    = '(Working...)'
     NO_MODULE_DATA = '(Filtered gene list is empty.)'
@@ -396,15 +396,15 @@ class View:
         self.plotco_btn_modu = dl.Downloader(self.MODULE_DOWNLD)
 
         # Create a fixed width data selection widet
-        self.plotco_sel_modu = ui.Select(rows=10,options=[],value=None)
+        self.plotco_sel_modu = ui.Select(rows=10,options=[],value=None,layout={'width':'99%'})
         self.plotco_sel_modu.add_class('selmono') # Use JavaScript to spec fixed-width font (see custom CSS)
 
         # Module selection # TODO If using latest ver of Jupyter, consider using grid widet instead
 
         # Create a fixed width header widget that will match data widget
-        header = [self.MODULE_HEADER[0][:-1],self.MODULE_HEADER[1][:-1]] # Hide last col, tho it is used in export/download
-        header = self.columnize(self.MODULE_HEADER[0][:-1],header)
-        header = ui.Select(options=header,disabled=True,value=None,layout=ui.Layout(height='3em'))
+        header = [self.MODULE_HEADER[0][:-2],self.MODULE_HEADER[1][:-2]] # Hide last 2 cols, tho they're used in export/download
+        header = self.columnize(self.MODULE_HEADER[0][:-2],header)
+        header = ui.Select(options=header,disabled=True,value=None,layout=ui.Layout(height='3em',width='99%'))
         header.add_class('selmono') # Use JavaScript to spec fixed-width font (see custom CSS)
 
         content = []
@@ -437,7 +437,7 @@ class View:
 
         widgets.append(ui.HBox(row))
 
-        widgets.append(ui.HBox([ui.VBox([header,self.plotco_sel_modu])],layout={'width':'90vw'})) # Cause horiz. scrollbar (was: 1024px)
+        widgets.append(ui.HBox([ui.VBox([header,self.plotco_sel_modu],layout={'width':'100%'})])) # was: ,layout={'width':'90vw'}
 
         content.append(self.section(self.PLOTCO1_TITLE,widgets))
 
