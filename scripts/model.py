@@ -51,6 +51,9 @@ class Model:
         # Dict where key is gene ID and value is experiment data for gene/condition
         self.filter_results = {}
 
+        # Dict where key is gene ID in filter results and value is dictionary of annotations for that gene
+        self.filter_results_annos = {}
+
         # Read headers out of certain files to create field name lists
 
         # Get conditions from header in experiments file
@@ -336,6 +339,22 @@ class Model:
                 self.ctrl.debug('search(): Error at "'+line[0]+'", exp #'+str(i))
                 raise
 
+    def add_annos(self):
+        '''Append annotation data to each gene record in search results'''
+        self.filter_results_annos = {}
+
+        # TODO Optimize performance
+
+        for gene_id,parsed_row in self.filter_results.items():
+            annos_dict = self.get_annos([gene_id])
+
+            if len(annos_dict):
+                #self.ctrl.debug('Adding annos: '+str(annos_dict))
+                self.filter_results_annos[gene_id] = annos_dict[gene_id]
+            else:
+                #self.ctrl.debug('Adding annos: (NOT FOUND)')
+                self.filter_results_annos[gene_id] = {}
+
     def write_filtered_data(self,output_widget):
         '''Dump filtered gene data to output widget for export'''
 
@@ -343,7 +362,7 @@ class Model:
 
         with output_widget:
             print(self.HEADER_FLAG+self.HEADER_FLAG+self.OUTPUT_FORMAT_HEADER)
-            print(self.HEADER_FLAG+self.GENE_ID+'\t'.join(self.cond))
+            print(self.HEADER_FLAG+self.GENE_ID+'\t'.join(self.cond)+'\t'.join(self.anno))
 
             self.ctrl.debug('write_filtered_data() started output')
 
@@ -352,6 +371,9 @@ class Model:
 
                 for record in parsed_row:
                     line += '\t' + ','.join(record)
+
+                for key,value in self.filter_results_annos[gene_id].items():
+                    line += '\t' + value
 
                 print(line)
 
@@ -420,7 +442,7 @@ class Model:
 
     def grep_reverse(self,search_terms,search_file):
         '''Grep through given file using given search term list, return list of index (1st col) values'''
-        self.ctrl.debug('Reverse lookup terms "'+str(search_terms)+'" for '+search_file)
+        #self.ctrl.debug('Reverse lookup terms "'+str(search_terms)+'" for '+search_file)
         found = []
         args  = ['-i'] + self.grep_args(search_terms)
 
@@ -445,7 +467,7 @@ class Model:
 
     def grep_lookup(self,search_terms,search_file,get_all=False):
         '''Grep through given file using given search term, return list of lines w/parsed fields'''
-        self.ctrl.debug('Lookup terms "'+str(search_terms)+'" for '+search_file)
+        #self.ctrl.debug('Lookup terms "'+str(search_terms)+'" for '+search_file)
         found = []
 
         if get_all:

@@ -81,6 +81,7 @@ class View:
     FILTER_APPLY   = 'Apply Filter'
     FILTER_DOWNLD  = 'Download&nbspSelected&nbspData'
     FILTER_PROG    = '<br>Filtering data...'
+    FILTER_PROG_ALL= '<br>Assembling ALL data! WARNING: This may take some time...'
     FILTER_REFEXP  = 'Refresh'
 
     PLOTEX1_TITLE  = 'Plot Filtered Data'
@@ -463,6 +464,7 @@ class View:
 
     def update_filtered_gene_list(self):
         '''Update filtered genes list with new data'''
+        self.ctrl.debug('At update_filtered_gene_list()')
 
         # Calc output line limit
         if self.filter_ddn_ndisp.value == self.ALL:
@@ -485,7 +487,7 @@ class View:
                         padding    : 3px;
                         border     : 1px solid black;
                         font-size  : 6px !important;
-                        text-align : right;
+                        text-align : left;
                         line-height: 12px;
                     }
                     </style>'''
@@ -494,19 +496,21 @@ class View:
         output += '<br><table class="op"><tr><th>'+self.FILTER17_TEXT+'</th>'
 
         # Column headers
-        for cond in self.model.cond:
-            output += '<th class="op">'+cond+'</th>'
+        for anno in self.model.anno[1:]:  # Skip first header since its for gene ID
+            output += '<th class="op">'+anno+'</th>'
 
         output += '</tr>' # '<th class="op">'+self.FILTER22_TEXT+'</th><th class="op">'+self.FILTER23_TEXT+'</th></tr>' End header  TODO output KEGG & GO
 
         # Build table rows
-        for count,(gene_id,parsed_row) in enumerate(self.model.filter_results.items()):
+        for count,(gene_id,annos) in enumerate(self.model.filter_results_annos.items()):
             output += '<tr><td class="op">'+gene_id+'</td>'
 
-            for record in parsed_row:
-                output += '<td class="op">'+record[0]+'</td>'
+            #self.ctrl.debug('Results for table: items='+str(annos))
 
-            output += '</tr>' # '<td></td><td></td></tr>' # End row TODO output KEGG & GO
+            for key,value in annos.items():
+                output += '<td class="op">'+value+'</td>'
+
+            output += '</tr>'
 
             if count+1 >= limit:
                 break
@@ -522,16 +526,16 @@ class View:
         pltr.clear_plots(self.plotex_img_dispp_hm)
 
         if enable:
-            self.ctrl.debug('set_plot_status() 3')
+            #self.ctrl.debug('set_plot_status() 3')
             self.plotex_ddn_selex_lg.disabled = False
             self.plotex_ddn_selex_hm.disabled = False
             self.plotco_ddn_netw.disabled     = False
 
-            self.ctrl.debug('set_plot_status() 4')
+            #self.ctrl.debug('set_plot_status() 4')
             pltr.line_plot.layout.title = pltr.LINE_PROMPT_TITLE
             pltr.net_plot.layout.title  = pltr.NET_PROMPT_TITLE
 
-            self.ctrl.debug('set_plot_status() 5')
+            #self.ctrl.debug('set_plot_status() 5')
             pltr.out_plot_msg(self.plotex_img_dispp_hm,pltr.HEAT_PROMPT_TITLE)
 
             # plotex_btn_downl_hm enabled when experiment is selected

@@ -148,6 +148,7 @@ class Controller:
                 perform_search = False
                 self.debug('Translation failed.')
             else:
+                self.view.filter_html_output.value = self.view.FILTER_PROG_ALL
                 self.debug('WARNING: Considering ALL genes.')
 
         self.model.clear_filter_results() # New search attempt so reset
@@ -161,6 +162,9 @@ class Controller:
 
             # Search for valid data, (results stored in model)
             self.model.search(target_ids,tpm_thresh,pval_thresh,fdr_thresh)
+
+            # Get annotation data (stored in model) for search results
+            self.model.add_annos()
 
         # Refresh output widgets
         self.refresh_filter_output()
