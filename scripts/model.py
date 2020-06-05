@@ -343,17 +343,43 @@ class Model:
         '''Append annotation data to each gene record in search results'''
         self.filter_results_annos = {}
 
-        # TODO Optimize performance
+        try:
+            # Build text file with search terms
+            with tempfile.NamedTemporaryFile(mode='w+t',delete=False) as tmpfile:
 
-        for gene_id,parsed_row in self.filter_results.items():
-            annos_dict = self.get_annos([gene_id])
+                latch = False
 
-            if len(annos_dict):
-                #self.ctrl.debug('Adding annos: '+str(annos_dict))
-                self.filter_results_annos[gene_id] = annos_dict[gene_id]
-            else:
-                #self.ctrl.debug('Adding annos: (NOT FOUND)')
-                self.filter_results_annos[gene_id] = {}
+                for gene_id in self.filter_results.keys():
+
+                    if latch:
+                        tmpfile.write('\n')
+                    else:
+                        latch = True
+
+                    tmpfile.write(gene_id)
+
+            # Run grep with search terms file
+            raw = subprocess.check_output([self.GREP_CMD,'-F','-f',tmpfile.name,os.path.join(self.root,self.ANNOTATIONS)])
+
+            # Get results
+            for line in raw.decode('utf-8').split('\n'): # TODO Rely on encoding?
+
+                # Skip headers
+                if not line.startswith(self.HEADER_FLAG) and not line.strip() == '':
+                    annos = {}
+                    line  = line.split('\t')
+
+                    # Creat dictionary
+                    for i in range(1,len(self.anno)):  # Assum gene ID is in 1st col, so skip it
+                        annos[self.anno[i]] = line[i]
+
+                    self.filter_results_annos[line[0]] = annos
+
+            #self.ctrl.debug('add_annos(): '+str(self.filter_results_annos))
+            os.remove(tmpfile.name)
+
+        except Exception as e:
+            self.ctrl.debug('add_annos() exception: "'+str(e)+'"')
 
     def write_filtered_data(self,output_widget):
         '''Dump filtered gene data to output widget for export'''
