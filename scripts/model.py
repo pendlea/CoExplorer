@@ -7,6 +7,8 @@ import csv
 import tempfile
 import subprocess
 from numpy import mean
+import base64
+import sys
 
 class Model:
 
@@ -381,32 +383,49 @@ class Model:
         except Exception as e:
             self.ctrl.debug('add_annos() exception: "'+str(e)+'"')
 
-    def write_filtered_data(self,output_widget):
+    def write_filtered_data(self):
         '''Dump filtered gene data to output widget for export'''
-
         self.ctrl.debug('write_filtered_data()')
+        data = ''
 
-        with output_widget:
-            print(self.HEADER_FLAG+self.HEADER_FLAG+self.OUTPUT_FORMAT_HEADER)
-            print(self.HEADER_FLAG+self.GENE_ID+'\t'.join(self.cond)+'\t'.join(self.anno))
-
-            self.ctrl.debug('write_filtered_data() started output')
-
+        try:
             for gene_id,parsed_row in self.filter_results.items():
                 line = gene_id
 
                 for record in parsed_row:
-                    line += '\t' + ','.join(record)
+                    line += '%09' + '%2C'.join(record)
 
                 for key,value in self.filter_results_annos[gene_id].items():
-                    line += '\t' + value
+                    line += '%09' + value
 
-                print(line)
+                data += line + '%0A' # TODO %0D ?
+        except:
+            self.ctrl.debug('write_filtered_data() - EXCEPTION:'+sys.exc_info()[0])
+            raise
 
         self.ctrl.debug('write_filtered_data() end output')
+        return data
 
-        # TODO Save for when file download is supported
-        #'''Dump filtered gene data to output file for download'''
+        # Old way #2: Clipboard...
+        #
+        #with output_widget:
+        #    print(self.HEADER_FLAG+self.HEADER_FLAG+self.OUTPUT_FORMAT_HEADER)
+        #    print(self.HEADER_FLAG+self.GENE_ID+'\t'.join(self.cond)+'\t'.join(self.anno))
+        #
+        #    self.ctrl.debug('write_filtered_data() started output')
+        #
+        #    for gene_id,parsed_row in self.filter_results.items():
+        #        line = gene_id
+        #
+        #        for record in parsed_row:
+        #            line += '\t' + ','.join(record)
+        #
+        #        for key,value in self.filter_results_annos[gene_id].items():
+        #            line += '\t' + value
+        #
+        #        print(line)
+
+        # Old way #1: Generate downloadable file
         #
         ## Write output
         #with open(self.outfile,'w') as handle:

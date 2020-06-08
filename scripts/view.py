@@ -82,7 +82,7 @@ class View:
     FILTER_DOWNLD  = 'Download&nbspSelected&nbspData'
     FILTER_PROG    = '<br>Filtering data...'
     FILTER_PROG_ALL= '<br>Assembling ALL data! WARNING: This may take some time...'
-    FILTER_REFEXP  = 'Refresh'
+    FILTER_REFEXP  = 'Create Download Link'
 
     PLOTEX1_TITLE  = 'Plot Filtered Data'
     PLOTEX1_TEXT   = 'Plotting is restricted to 100 genes.'
@@ -254,7 +254,7 @@ class View:
         self.filter_ddn_ndisp   = ui.Dropdown(options=['25','50','100',self.ALL],layout=self.LO10) # TODO To avoid overload, consider using a max instead of all
         self.filter_btn_downd   = dl.Downloader(self.FILTER_DOWNLD)
         self.filter_html_output = ui.HTML(self.EMPTY_LIST_MSG)
-        self.filter_btn_refexp  = ui.Button(description=self.FILTER_REFEXP,icon='refresh',layout=self.LO20)
+        self.filter_btn_refexp  = ui.Button(description=self.FILTER_REFEXP,icon='download',layout=self.LO20)
 
         content = []
 
@@ -331,7 +331,7 @@ class View:
 
         self.filter_out_export = ui.Output(layout={'border': '1px solid black'})
         row = self.section(self.FILTER24_TITLE,[ui.VBox([self.filter_btn_refexp,self.filter_out_export])])
-        row.selected_index = None
+        #row.selected_index = None
         content.append(row)
 
         tabs.append(ui.VBox(content))
@@ -573,6 +573,12 @@ class View:
 
         return ret
 
+    def output_data_link(self,output_widget,data):
+        pre  = '<a download="coexplorer.csv" target="_blank" href="data:text/csv;charset=utf-8,'
+        post = '">Download</a>'
+
+        with output_widget:
+            display(ui.HTML(pre+data+post))
 
 
 

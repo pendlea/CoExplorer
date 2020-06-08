@@ -13,7 +13,7 @@ class Controller:
     VALUE = 'value' # for observe calls
 
     def __init__(self):
-        self.debugging     = False # NOTE Change to False to hide debug output
+        self.debugging     = True # NOTE Change to False to hide debug output
         self.debug_buffer  = []
         self.display_ready = False
 
@@ -66,7 +66,7 @@ class Controller:
 
         if self.model.filter_results:
             self.debug('fill_export() has filter results')
-            self.model.write_filtered_data(self.view.filter_out_export) # TODO Remove param when file download supported
+            self.view.output_data_link(self.view.filter_out_export,self.model.write_filtered_data())
 
     def three_state_pressed(self,button):
         '''React to user pressing a 3-state button in fitler'''
