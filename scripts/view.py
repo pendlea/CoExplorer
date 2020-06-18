@@ -3,7 +3,7 @@
 
 import sys
 import ipywidgets as ui
-from scripts import downloader as dl
+import urllib
 
 class View:
 
@@ -251,8 +251,7 @@ class View:
         self.filter_txt_fdr     = ui.Text(description=self.FILTER9_TEXT,value=self.DEFAULT_FDR ,placeholder='NA')
         self.filter_conditons   = [] # Created in loop below
         self.filter_btn_apply   = ui.Button(description=self.FILTER_APPLY,icon='filter',layout=self.LO20)
-        self.filter_ddn_ndisp   = ui.Dropdown(options=['25','50','100',self.ALL],layout=self.LO10) # TODO To avoid overload, consider using a max instead of all
-        self.filter_btn_downd   = dl.Downloader(self.FILTER_DOWNLD)
+        self.filter_ddn_ndisp   = ui.Dropdown(options=['25','50','100',self.ALL],layout=self.LO10)
         self.filter_html_output = ui.HTML(self.EMPTY_LIST_MSG)
         self.filter_btn_refexp  = ui.Button(description=self.FILTER_REFEXP,icon='download',layout=self.LO20)
 
@@ -320,7 +319,6 @@ class View:
         row.append(ui.HTML('<div style="text-align: right;">'+self.FILTER15_TEXT+'</div>',layout=self.LO15))
         row.append(self.filter_ddn_ndisp)
         row.append(ui.HTML('<div style="text-align: left;">' +self.FILTER16_TEXT+'</div>',layout=self.LO10))
-        #row.append(self.filter_btn_downd.widget) # TODO Save for when file download is supported
         widgets.append(ui.HBox(row))
 
         widgets.append(ui.HBox([self.filter_html_output],layout={'width':'90vw'})) # Cause horiz. scrollbar (was: 1200)
@@ -343,7 +341,7 @@ class View:
 
         # Plot line graphs ---
 
-        self.plotex_ddn_selex_lg = ui.Dropdown(options=[self.EMPTY]+self.model.exps,value=None,disabled=True) # TODO Plot _all_ experiments
+        self.plotex_ddn_selex_lg = ui.Dropdown(options=[self.EMPTY]+self.model.exps,value=None,disabled=True)
 
         widgets = []
 
@@ -358,9 +356,8 @@ class View:
 
         # Plot heatmaps ---
 
-        self.plotex_btn_downl_hm = dl.Downloader(self.PLOT_DOWNLOAD)
         self.plotex_ddn_selex_hm = ui.Dropdown(options=[self.EMPTY,self.ALL]+self.model.exps,value=None,disabled=True)
-        self.plotex_img_dispp_hm = ui.Output() # TODO Make taller?
+        self.plotex_img_dispp_hm = ui.Output()
 
         self.ctrl.plotter.out_plot_msg(self.plotex_img_dispp_hm,self.ctrl.plotter.HEAT_INIT_TITLE)
 
@@ -369,7 +366,6 @@ class View:
         row = []
         row.append(ui.HTML(value=self.PLOTEX3_TEXT))
         row.append(ui.Label(value='',layout=ui.Layout(width='60%'))) # Cheat: spacer
-        #row.append(self.plotex_btn_downl_hm.widget) # TODO Save for when file download is supported
         widgets.append(ui.HBox(row))
 
         widgets.append(self.plotex_ddn_selex_hm)
@@ -394,13 +390,13 @@ class View:
         self.plotco_ddn_netw  = ui.Dropdown(options=[(self.EMPTY,self.EMPTY)]+disp_vals,value=None,disabled=True)
 
         # Download button
-        self.plotco_btn_modu = dl.Downloader(self.MODULE_DOWNLD)
+        self.plotco_btn_modu = ui.Button(description=self.FILTER_REFEXP,icon='download',layout=self.LO20)
 
         # Create a fixed width data selection widet
         self.plotco_sel_modu = ui.Select(rows=10,options=[],value=None,layout={'width':'99%'})
         self.plotco_sel_modu.add_class('selmono') # Use JavaScript to spec fixed-width font (see custom CSS)
 
-        # Module selection # TODO If using latest ver of Jupyter, consider using grid widet instead
+        # Module selection # NOTE If using latest ver of Jupyter, consider using grid widet instead of fixed font select widget
 
         # Create a fixed width header widget that will match data widget
         header = [self.MODULE_HEADER[0][:-2],self.MODULE_HEADER[1][:-2]] # Hide last 2 cols, tho they're used in export/download
@@ -410,7 +406,7 @@ class View:
 
         content = []
 
-        # Image TODO Move to model?
+        # Image
         with open('images/DecayRates.png','rb') as handle:
             image = handle.read()
 
@@ -431,11 +427,6 @@ class View:
         row = []
         row.append(ui.HTML(value=self.PLOTCO3_TEXT))
         row.append(ui.Label(value='',layout=ui.Layout(width='60%'))) # Cheat: spacer
-
-        # TODO Save for when file download is supported
-        #self.plotco_btn_modu.widget.value = '<br>' + self.plotco_btn_modu.widget.value # Cheat: adjust btn to align w/label in row
-        #row.append(self.plotco_btn_modu.widget)
-
         widgets.append(ui.HBox(row))
 
         widgets.append(ui.HBox([ui.VBox([header,self.plotco_sel_modu],layout={'width':'100%'})])) # was: ,layout={'width':'90vw'}
@@ -444,11 +435,11 @@ class View:
 
         # "Export"
         self.plotco_out_export = ui.Output(layout={'border': '1px solid black'})
-        row = self.section(self.FILTER24_TITLE,[self.plotco_out_export])
+        row = self.section(self.FILTER24_TITLE,[ui.VBox([self.plotco_btn_modu,self.plotco_out_export])])
         row.selected_index = None
         content.append(row)
 
-        # Network Graph of Selected Module NOTE Uses widget created by plotter TODO Make taller?
+        # Network Graph of Selected Module NOTE Uses widget created by plotter
         content.append(self.section(self.PLOTCO2_TITLE,[self.ctrl.plotter.net_plot]))
 
         tabs.append(ui.VBox(content))
@@ -464,7 +455,6 @@ class View:
 
     def update_filtered_gene_list(self):
         '''Update filtered genes list with new data'''
-        self.ctrl.debug('At update_filtered_gene_list()')
 
         # Calc output line limit
         if self.filter_ddn_ndisp.value == self.ALL:
@@ -499,13 +489,11 @@ class View:
         for anno in self.model.anno[1:]:  # Skip first header since its for gene ID
             output += '<th class="op">'+anno+'</th>'
 
-        output += '</tr>' # '<th class="op">'+self.FILTER22_TEXT+'</th><th class="op">'+self.FILTER23_TEXT+'</th></tr>' End header  TODO output KEGG & GO
+        output += '</tr>'
 
         # Build table rows
         for count,(gene_id,annos) in enumerate(self.model.filter_results_annos.items()):
             output += '<tr><td class="op">'+gene_id+'</td>'
-
-            #self.ctrl.debug('Results for table: items='+str(annos))
 
             for key,value in annos.items():
                 output += '<td class="op">'+value+'</td>'
@@ -526,21 +514,14 @@ class View:
         pltr.clear_plots(self.plotex_img_dispp_hm)
 
         if enable:
-            #self.ctrl.debug('set_plot_status() 3')
             self.plotex_ddn_selex_lg.disabled = False
             self.plotex_ddn_selex_hm.disabled = False
             self.plotco_ddn_netw.disabled     = False
 
-            #self.ctrl.debug('set_plot_status() 4')
             pltr.line_plot.layout.title = pltr.LINE_PROMPT_TITLE
             pltr.net_plot.layout.title  = pltr.NET_PROMPT_TITLE
 
-            #self.ctrl.debug('set_plot_status() 5')
             pltr.out_plot_msg(self.plotex_img_dispp_hm,pltr.HEAT_PROMPT_TITLE)
-
-            # plotex_btn_downl_hm enabled when experiment is selected
-            # plotco_sel_modu enabled when network is selected
-            # plotco_btn_modu enabled when network is selected
 
         else:
             self.plotex_ddn_selex_lg.disabled = True
@@ -548,15 +529,10 @@ class View:
             self.plotco_ddn_netw.disabled     = True
 
             pltr.line_plot.layout.title = pltr.LINE_INIT_TITLE
-            pltr.net_plot.layout.title  = pltr.NET_INIT_TITLE    # TODO Also clear drawn objects from network plot
+            pltr.net_plot.layout.title  = pltr.NET_INIT_TITLE
 
             pltr.out_plot_msg(self.plotex_img_dispp_hm,pltr.HEAT_INIT_TITLE)
-
-            self.plotex_btn_downl_hm.update()
             self.ctrl.set_module_data([self.NO_MODULE_DATA],[(None,None)])
-            #self.plotco_btn_modu.update() # TODO Save for when file download is supported
-
-            self.ctrl.debug('set_plot_status(false)')
 
     def get_module_export_header(self):
         '''Generate module output header for export'''
@@ -573,12 +549,14 @@ class View:
 
         return ret
 
-    def output_data_link(self,output_widget,data):
+    def output_data_link(self,output_widget,data_str):
+        '''Create data URI link to download data'''
+
         pre  = '<a download="coexplorer.csv" target="_blank" href="data:text/csv;charset=utf-8,'
         post = '">Download</a>'
 
         with output_widget:
-            display(ui.HTML(pre+data+post))
+            display(ui.HTML(pre+urllib.parse.quote(data_str)+post))
 
 
 

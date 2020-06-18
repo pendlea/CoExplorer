@@ -3,9 +3,10 @@
 
 import os
 
-# TODO Reconcile warning "numpy.dtype size changed, may indicate binary incompatibility"
+# Avoids warning: "numpy.dtype size changed, may indicate binary incompatibility"
 import warnings
 warnings.filterwarnings('ignore')
+
 from scripts import plotter
 
 class Controller:
@@ -13,7 +14,7 @@ class Controller:
     VALUE = 'value' # for observe calls
 
     def __init__(self):
-        self.debugging     = True # NOTE Change to False to hide debug output
+        self.debugging     = False # NOTE Change to False to hide debug output
         self.debug_buffer  = []
         self.display_ready = False
 
@@ -57,16 +58,22 @@ class Controller:
             for button in item:
                 button.on_click(self.three_state_pressed)
 
-        self.view.filter_btn_refexp.on_click(self.fill_export)
+        self.view.filter_btn_refexp.on_click(self.fill_results_export)
+        self.view.plotco_btn_modu.on_click(self.fill_module_export)
 
-    def fill_export(self,change):
+    def fill_results_export(self,change):
         # Generate output file
         self.view.filter_out_export.clear_output()
-        self.debug('fill_export()')
 
         if self.model.filter_results:
-            self.debug('fill_export() has filter results')
             self.view.output_data_link(self.view.filter_out_export,self.model.write_filtered_data())
+
+    def fill_module_export(self,change):
+        # Generate output file
+        self.view.plotco_out_export.clear_output()
+
+        if self.model.filter_results:
+            self.view.output_data_link(self.view.plotco_out_export,self.model.module_download_data)
 
     def three_state_pressed(self,button):
         '''React to user pressing a 3-state button in fitler'''
@@ -129,6 +136,7 @@ class Controller:
         self.view.plotex_ddn_selex_hm.value = self.view.EMPTY
         self.view.plotco_ddn_netw.value     = self.view.EMPTY
         self.set_module_data([''],[(None,None)])
+        self.model.clear_module_download()
 
         # Get IDs from UI
         gene_ids   = self.parse(self.view.filter_txt_gene.value)
@@ -176,7 +184,6 @@ class Controller:
         # Enable or disable controls based on filter results
         if self.model.filter_results:
             self.view.update_filtered_gene_list()    # Update output table in filter tab
-            #self.view.filter_btn_downd.update(self.model.outfile)  # Enable download # TODO Save for when file download is supported
             self.view.set_plot_status(enable=True)
         else:
             self.view.filter_html_output.value = self.view.EMPTY_LIST_MSG
@@ -199,8 +206,7 @@ class Controller:
             gene_list = list(self.model.filter_results.keys())
 
             if len(gene_list) > 1:
-                self.plotter.draw_heatmap_plot(experiment,gene_list,self.view.plotex_img_dispp_hm) #,self.model.heatmapfile) # TODO Save for when file download is supported
-                #self.view.plotex_btn_downl_hm.update(self.model.heatmapfile) # TODO Save for when file download is supported
+                self.plotter.draw_heatmap_plot(experiment,gene_list,self.view.plotex_img_dispp_hm)
             else:
                 self.plotter.out_plot_msg(self.view.plotex_img_dispp_hm,self.plotter.HEAT_LESS_THAN_TWO)
 
@@ -214,15 +220,13 @@ class Controller:
 
             # Any filter results available?
             if self.model.filter_results:
-                # Get module data and format it # TODO Consider restricting filter results (100?)
+                # Get module data and format it
                 display,values = self.model.get_module_data(network,self.view.plotco_out_export)
                 display        = self.view.columnize(self.view.MODULE_HEADER[0],display)
-                #self.view.plotco_btn_modu.update(self.model.modulefile) # Enable download button # TODO Save for when file download is supported
             else:
                 display = [self.view.NO_MODULE_DATA]
                 values  = [(None,None)]
                 self.ctrl.debug('No module data: "'+str(module_data)+'"')
-                #self.view.plotco_btn_modu.update() # Disable download button # TODO Save for when file download is supported
 
             self.set_module_data(display,values)
 
@@ -239,7 +243,7 @@ class Controller:
         module         = line.split()[0]
         self.debug('module_selected(): module='+module+', recovered='+str(recovered)+', line='+line)
 
-        # Build path to ABC file: "./Networks/Network_10/N010M00910.abc" TODO Abstract into model?
+        # Build path to ABC file: "./Networks/Network_10/N010M00910.abc"
         abc_path = os.path.join(
             self.model.DATA_DIR               # '.'
             ,self.model.NET_DIR               # 'Networks'

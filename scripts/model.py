@@ -32,20 +32,16 @@ class Model:
     EXP_COL        = 2
 
     COEXP          = '_Coexp_'
-    OUTPUT_SUFFIX  = COEXP+'results.csv'
-    HEATMAP_SUFFIX = COEXP+'heatmap.png'
-    MODULE_SUFFIX  = COEXP+'modules.csv'
     IMAGE_ERROR    = 'ERROR at open image file: '
 
     OUTPUT_FORMAT_HEADER = 'Fields per gene ID (row) and condition (column): <avg_exp,p_value,FDR,fold_chg>'
 
-    GREP_CMD = 'grep' # TODO Consider security vulnerability, TODO Fix grep location bug
+    GREP_CMD = 'grep'
 
     def __init__(self):
         self.view      = None
         self.ctrl      = None
         self.root      = self.DATA_DIR
-        self.gene      = {} # for each displayed module, store full gene list TODO This (model's .gene) unused? Remove?
         self.exps      = [] # experiment list from samples file - filled when view calls get_samples()
         self.samp_dict = {} # sample dictionary - filled when view calls get_samples()
         self.cond_dict = {} # condition dictionary for samples - filled when view calls get_samples()
@@ -55,6 +51,9 @@ class Model:
 
         # Dict where key is gene ID in filter results and value is dictionary of annotations for that gene
         self.filter_results_annos = {}
+
+        # String containing module data for download
+        self.module_download_data = ''
 
         # Read headers out of certain files to create field name lists
 
@@ -69,38 +68,6 @@ class Model:
         # Get annotation fields from header in annotations file (used by plotting)
         with open(os.path.join(self.root,self.ANNOTATIONS),'rt') as handle:
             self.anno = next(csv.reader(handle,delimiter='\t'),None) # Do NOT skip "#GeneID"
-
-        # TODO Save for when file download is supported
-        ## Create unique output files for this session (in case hitting shared storage)
-        #
-        ## TODO Use session ID for naming?
-        ## TODO Insead of always writing output to files, consider buttons that create files when pressed and steam data down to browser
-        #
-        ## For filter results...
-        #with tempfile.NamedTemporaryFile(mode='w+t',dir=self.TEMP_ROOT,suffix=self.OUTPUT_SUFFIX,delete=False) as tmpfile:
-        #    self.outfile = tmpfile.name
-        #
-        ## For heatmap plot...
-        #with tempfile.NamedTemporaryFile(mode='w+t',dir=self.TEMP_ROOT,suffix=self.HEATMAP_SUFFIX,delete=False) as tmpfile:
-        #    self.heatmapfile = tmpfile.name
-        #
-        ## For selected module data...
-        #with tempfile.NamedTemporaryFile(mode='w+t',dir=self.TEMP_ROOT,suffix=self.MODULE_SUFFIX,delete=False) as tmpfile:
-        #    self.modulefile = tmpfile.name
-
-        # Clean up any output files older than 2 days
-
-        for existing in os.listdir(): # TODO Use app root or some temp shared storage (like /tmp)?
-
-            if (existing.endswith(self.OUTPUT_SUFFIX ) or
-                existing.endswith(self.HEATMAP_SUFFIX) or
-                existing.endswith(self.MODULE_SUFFIX )   ):
-
-                stamp = os.stat(existing).st_ctime
-
-                # Older than 2 days? Delete it
-                if datetime.date.today() - datetime.date.fromtimestamp(stamp) > datetime.timedelta(2):
-                    os.remove(existing)
 
     def intro(self,view,ctrl):
         self.view = view
@@ -224,22 +191,17 @@ class Model:
         qry_gen_set = set(qry_gen)
         disp_data   = [] # Create list of module records (lists with all fields as strings) for display
         value_data  = [] # Create list of tupeles (module,recovered) corresponding to disp_data
-        self.gene   = {} # Reset our gene storage
 
         # Read thru module summary file, selecting data, and write to module output file
 
         # NOTE Assumes dir name is exact same as select option.
         #      If they differ, then use NET_PREFIX to match and fix up.
-        with open(os.path.join(self.root,self.NET_DIR,network,self.MODULE),'r') as summ_in: #, open(self.modulefile,'w') as mod_out: # TODO Save for when file download is supported
+        with open(os.path.join(self.root,self.NET_DIR,network,self.MODULE),'r') as summ_in:
 
-            # TODO Save for when file download is supported
-            #mod_out.truncate(0) # Truncate file, in case we've done a previous write
-            #writer = csv.writer(mod_out,delimiter='\t')
-            #writer.writerow(self.view.get_module_export_header()) # TODO Test this
-            with output_widget:
-                print('#',end='')
-                print('\t'.join(self.view.get_module_export_header()))
+            # Add header line to download string
+            self.module_download_data = self.HEADER_FLAG + '\t'.join(self.view.get_module_export_header()) + '\n'
 
+            # Start reading module file
             reader = csv.reader(summ_in,delimiter='\t')
             next(reader,None) # Skip header
 
@@ -250,7 +212,6 @@ class Model:
                 if not recovered:
                     continue # Only show lines with at least one recovered gene
 
-                self.gene[line[0]] = mod_gen_set                                # Save off full gene list for plotting
                 num_qry_mod        = len(qry_gen_set.intersection(mod_gen_set)) # Count query genes in module
                 num_both           = len(qry_gen_set.union(       mod_gen_set)) # Count superset of query and mod genes
 
@@ -268,11 +229,8 @@ class Model:
                     ,','.join(        mod_gen_set                           ) # All genes in module
                 ]
 
-                # TODO Save for when file download is supported
-                ## Add to output file
-                #writer.writerow(output_fields)
-                with output_widget:
-                    print('\t'.join(output_fields))
+                # Add to download string
+                self.module_download_data += '\t'.join(output_fields) + '\n'
 
                 # Add to return values (for select widget)
                 disp_data.append(output_fields[:-2]) # Data user will see. Hide last col, tho is used in export/download
@@ -282,6 +240,9 @@ class Model:
 
     def clear_filter_results(self):
         self.filter_results = {}
+
+    def clear_module_download(self):
+        self.module_download_data = ''
 
     def search(self,target_ids,tpm_thresh,pval_thresh,fdr_thresh):
         '''Find data for given gene(s) and condition tests, save to class properites'''
@@ -294,7 +255,7 @@ class Model:
                 parsed_row = []   # All parsed data from current line
 
                 # Run thru records for ea. condition
-                # TODO Optimize by building list of non-clear cond tests and only checking those conditions
+                # NOTE: Could optimize by building list of non-clear cond tests and only checking those conditions
                 for i,csv_data in enumerate(line[1:]): # skip 1st col continaing gene ID
                     record   = csv_data.split(',') # Parsed values for this gene and condition
                     tpm      = float(record[0])
@@ -364,7 +325,7 @@ class Model:
             raw = subprocess.check_output([self.GREP_CMD,'-F','-f',tmpfile.name,os.path.join(self.root,self.ANNOTATIONS)])
 
             # Get results
-            for line in raw.decode('utf-8').split('\n'): # TODO Rely on encoding?
+            for line in raw.decode('utf-8').split('\n'): # NOTE relies on utf8 encoded
 
                 # Skip headers
                 if not line.startswith(self.HEADER_FLAG) and not line.strip() == '':
@@ -377,7 +338,6 @@ class Model:
 
                     self.filter_results_annos[line[0]] = annos
 
-            #self.ctrl.debug('add_annos(): '+str(self.filter_results_annos))
             os.remove(tmpfile.name)
 
         except Exception as e:
@@ -385,67 +345,26 @@ class Model:
 
     def write_filtered_data(self):
         '''Dump filtered gene data to output widget for export'''
-        self.ctrl.debug('write_filtered_data()')
-        data = ''
+
+        data =  self.HEADER_FLAG + self.HEADER_FLAG + self.OUTPUT_FORMAT_HEADER + '\n'
+        data += self.HEADER_FLAG + self.GENE_ID + '\t'.join(self.cond) + '\t' + '\t'.join(self.anno) + '\n'
 
         try:
             for gene_id,parsed_row in self.filter_results.items():
                 line = gene_id
 
                 for record in parsed_row:
-                    line += '%09' + '%2C'.join(record)
+                    line += '\t' + ','.join(record)
 
                 for key,value in self.filter_results_annos[gene_id].items():
-                    line += '%09' + value
+                    line += '\t' + value
 
-                data += line + '%0A' # TODO %0D ?
+                data += line + '\n'
         except:
             self.ctrl.debug('write_filtered_data() - EXCEPTION:'+sys.exc_info()[0])
             raise
 
-        self.ctrl.debug('write_filtered_data() end output')
         return data
-
-        # Old way #2: Clipboard...
-        #
-        #with output_widget:
-        #    print(self.HEADER_FLAG+self.HEADER_FLAG+self.OUTPUT_FORMAT_HEADER)
-        #    print(self.HEADER_FLAG+self.GENE_ID+'\t'.join(self.cond)+'\t'.join(self.anno))
-        #
-        #    self.ctrl.debug('write_filtered_data() started output')
-        #
-        #    for gene_id,parsed_row in self.filter_results.items():
-        #        line = gene_id
-        #
-        #        for record in parsed_row:
-        #            line += '\t' + ','.join(record)
-        #
-        #        for key,value in self.filter_results_annos[gene_id].items():
-        #            line += '\t' + value
-        #
-        #        print(line)
-
-        # Old way #1: Generate downloadable file
-        #
-        ## Write output
-        #with open(self.outfile,'w') as handle:
-        #    handle.truncate(0) # Start at beginning of file, in case we've done a previous write
-        #    writer = csv.writer(handle,delimiter='\t')
-        #
-        #    # Header
-        #    writer.writerow([self.HEADER_FLAG+self.HEADER_FLAG+self.OUTPUT_FORMAT_HEADER])
-        #    writer.writerow([self.HEADER_FLAG+self.GENE_ID]+self.cond)
-        #
-        #    # Data
-        #    for gene_id,parsed_row in self.filter_results.items():
-        #        line = [gene_id]
-        #
-        #        for record in parsed_row:
-        #            line.append(','.join(record))
-        #
-        #    writer.writerow(line)
-        #
-        #self.ctrl.debug('Wrote output to: '+self.outfile)
 
     def translate_genes(self,genes,funcs):
         '''Translate given gene IDs into native IDs'''
@@ -487,7 +406,6 @@ class Model:
 
     def grep_reverse(self,search_terms,search_file):
         '''Grep through given file using given search term list, return list of index (1st col) values'''
-        #self.ctrl.debug('Reverse lookup terms "'+str(search_terms)+'" for '+search_file)
         found = []
         args  = ['-i'] + self.grep_args(search_terms)
 
@@ -497,22 +415,21 @@ class Model:
                 raw = subprocess.check_output([self.GREP_CMD] + args + [search_file])
 
                 # Pull index (1st col) out of results
-                for line in raw.decode('utf-8').split('\n'): # TODO Rely on encoding?
+                for line in raw.decode('utf-8').split('\n'): # NOTE relies on encoded
                     first = line.split('\t')[0]
 
-                    # TODO Consider verifying that search term IS in index (1st col)?
+                    # NOTE Should we verify that search term IS in index (1st col)?
 
                     if not first.startswith(self.HEADER_FLAG) and not first == '':
                         found.append(first)
             except Exception as e:
-                self.ctrl.debug('Exception: "'+str(e)+'"')
+                self.ctrl.debug('grep_reverse() exception: "'+str(e)+'"')
                 found = []
 
         return found
 
     def grep_lookup(self,search_terms,search_file,get_all=False):
         '''Grep through given file using given search term, return list of lines w/parsed fields'''
-        #self.ctrl.debug('Lookup terms "'+str(search_terms)+'" for '+search_file)
         found = []
 
         if get_all:
@@ -528,15 +445,15 @@ class Model:
                 #self.ctrl.debug('grep_lookup(): raw = "'+str(raw)+'"')
 
                 # Pull index (1st col) out of results
-                for line in raw.decode('utf-8').split('\n'): # TODO Rely on encoding?
+                for line in raw.decode('utf-8').split('\n'): # NOTE relies on encoded
 
-                    # TODO Consider verifying that search term IS NOT in index (1st col)?
+                    # Shoudl we verify that search term IS NOT in index (1st col)?
 
                     if not line.startswith(self.HEADER_FLAG) and not line.strip() == '':
                         found.append(line.split('\t'))
 
             except Exception as e:
-                self.ctrl.debug('Exception: "'+str(e)+'"')
+                self.ctrl.debug('grep_lookup() exception: "'+str(e)+'"')
                 found = []
 
         return found

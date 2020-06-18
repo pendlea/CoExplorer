@@ -187,7 +187,7 @@ class Plotter:
         '''Replace current plot output with message'''
         with output_widget:
             clear_output(wait=True)
-            print(text)  # TODO Center the text in the output area
+            print(text)
 
     def limit_num_genes(self,gene_list):
         '''Truncate list of genes if needed'''
@@ -199,7 +199,6 @@ class Plotter:
         text          = self.GENE_ID_LBL + ': ' + gene_id + '<br>'
 
         if any(key == gene_id for key in annos):
-            self.ctrl.debug('build_annotations_text()'+str(annos[gene_id]))
 
             for key,value in annos[gene_id].items():
 
@@ -254,10 +253,9 @@ class Plotter:
         node_trace.z    = []
         node_trace.text = []
 
-    def draw_heatmap_plot(self,experiment,gene_list,out_widget): #,save_file): # TODO Save for when file download is supported
+    def draw_heatmap_plot(self,experiment,gene_list,out_widget):
         '''Create new plot widget, fill with new line plot, append to output'''
         # Dendrograms are determined by distance matrix calculations, color intensity of cells are z-score normalized gene expression matrix data
-        self.ctrl.debug('Plotting heatmap...')
         self.out_plot_msg(out_widget,self.HEAT_UPDATE_TITLE) # NOTE Also clears plot
 
         gene_list                    = self.limit_num_genes(gene_list)
@@ -294,8 +292,6 @@ class Plotter:
             plt.setp(sns_plot.ax_heatmap.yaxis.get_majorticklabels()                      ,rotation=0 ,fontsize=self.HEAT_FONT_SIZE)
             sns_plot.ax_heatmap.set_xticklabels(sns_plot.ax_heatmap.get_xmajorticklabels(),rotation=90,fontsize=self.HEAT_FONT_SIZE)
             sns_plot.ax_heatmap.set_yticklabels(sns_plot.ax_heatmap.get_ymajorticklabels(),rotation=0 ,fontsize=self.HEAT_FONT_SIZE)
-
-            #plt.savefig(save_file) # TODO Save for when file download is supported
 
             clear_output(wait=True)
             print(self.HEAT_PREFIX_TITLE + experiment)
