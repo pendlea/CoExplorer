@@ -32,16 +32,15 @@ class View:
     expression analysis was performed using the EdgeR R package (Robinson, McCarthy, and Smyth 2010). Genes with significantly 
     higher or lower expression levels (p <0.05) in test conditions relative to paired controls were assessed.</p>
     <b>Co-Expression Network Construction and Analysis</b>
-    <p>An expression matrix was constructed with a column for every sample that passed initial library quality
-    score filtration, and rows representing gene expression support (in the form of raw read counts) for all S.
-    viridis A10 genes. An initial filtration step was performed to remove any gene from the matrix that did not
-    display expression support in at least three libraries and did not have a sum of at least ten reads mapped
-    across all libraries. This filtration step reduced the matrix size from 38,334 to 23,708 genes. Next, the R
-    package DeSeq2 ((Love, Huber, and Anders 2014)) transformed the filtered read counts using the Variance
-    Stabilized Transformation (VST). Finally, pair-wise Pearson’s correlation values were calculated between all
-    posisble gene pairs using the calc_pearsons_correlation.pl script, and mutual ranks were calculated with
-    calc_mutual_rank.pl. Finally, co-expressed modules were delineated using ClusterONE ((Nepusz, Yu, and
-    Paccanaro 2012)) with decay values of 5, 10, 25.</p>
+    <p>The expression results from Kallisto, version 2.0 of the ME034V gene annotation set, and the 354 passing samples 
+    were used as input in the coexp-pipe coexpression network pipeline (https://github.rcac.purdue.edu/jwisecav/coexp-pipe). 
+    The pipeline includes an initial filtration step to remove any gene from the matrix that does not display expression 
+    support in at least three libraries and does not have a sum of at least ten reads mapped across all libraries. Next, 
+    the R package DeSeq2 (Love, Huber, and Anders 2014) transforms the filtered read counts using the Variance Stabilized 
+    Transformation (VST). Finally, pairwise Pearson’s correlation values are calculated between all possible gene pairs, 
+    followed by calculation of mutual ranks. Finally, co-expressed modules were delineated using ClusterONE (Nepusz, Yu, 
+    and Paccanaro 2012) with decay values of 5, 10, 25, 50, and 100. For the integration into the CoExplorer website, only 
+    results from decay values 5, 10, and 25 are linked.</p>
     <b>Works Cited</b>
     <p>Bray, N.L., Pimentel, H., Melsted, P., and Pachter, L. (2016) “Near-optimal probabilistic RNA-seq quantification.” 
     Nature Biotechnology 34: 525–527.</p>
@@ -54,12 +53,15 @@ class View:
     '''
     SAMPLES1_TITLE = 'Samples'
     FILTER1_TITLE  = 'Filter by Gene ID'
-    FILTER1_TEXT   = '<b>Provide either Setaria or Arabidopsis gene IDs</b>'
-    FILTER1_HINT   = 'Provide Setaria viridis ME034V gene IDs (eg: Svm7G0000010). You can also search for OrthoFinder-identified orthologs in ME034V to the following species/genomes: S. viridis A10 (eg: Sevir.5G400800), S. italica (eg: Seita.1G019400), sorghum (eg: Sobic.006G004700), rice (eg: Os03g27570), corn (eg: Zm00001d024902), Arabidopsis (eg: AT2G46040).'
+    #FILTER1_TEXT   = '<b>Provide either Setaria or Arabidopsis gene IDs</b>'
+    FILTER1_TEXT   = '<b>Provide Setaria viridis ME034V gene IDs (eg: Svm7G0018960). </b>'
+    FILTER1_TEXT_2 = 'You can also search for OrthoFinder-identified orthologs in ME034V to the following species/genomes: S. viridis A10 (eg: Sevir.5G400800), S. italica (eg: Seita.1G019400), sorghum (eg: Sobic.006G004700), rice (eg: Os03g27570), corn (eg: Zm00001d024902), Arabidopsis (eg: AT2G46040). Search with single gene, or comma-separated list of genes.'
+    FILTER1_HINT   = 'e.g. Sevir.5G400800, AT1G44575'
     FILTER2_TITLE  = 'Filter by Function'
-    FILTER2_TEXT   = '<b>Provide either GO ID or KEGG PATHWAY ID<b>'
-    FILTER2_HINT   = 'Provide keyword (eg: cytochrome p450), GO ID (eg: GO:0009522), Interpro ID (eg: IPR013087), KEGG ID (eg: K01835), or E.C. code (eg: EC:2.1.1.112)'
-    FILTER3_TITLE  = 'Filter by Gene Expression'
+    #FILTER2_TEXT   = '<b>Provide either GO ID or KEGG PATHWAY ID</b>'
+    FILTER2_TEXT   = '<b>Provide keyword (eg: cytochrome p450), GO ID (eg: GO:0009522), Interpro ID (eg: IPR013087), KEGG ID (eg: K01835), or E.C. code (eg: EC:2.1.1.112).<b>'
+    FILTER2_HINT   = 'e.g. GO:0009522, KOG0190'
+    FILTER3_TITLE  = 'Filter by Expression'
     FILTER4_TITLE  = 'Filtered Gene List'
     FILTER5_TEXT   = '<b>Set minimally expressed threshold</b>'
     FILTER6_TEXT   = 'TPM'
@@ -261,6 +263,7 @@ class View:
 
         widgets = []
         widgets.append(ui.HTML(value=self.FILTER1_TEXT))
+        widgets.append(ui.HTML(value=self.FILTER1_TEXT_2))
         widgets.append(self.filter_txt_gene)
         content.append(self.section(self.FILTER1_TITLE,widgets))
 
