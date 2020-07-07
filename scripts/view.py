@@ -18,26 +18,19 @@ class View:
     WELCOME2_TITLE = 'Methods'
     WELCOME2_TEXT  = '''
     <b>Gene Differential Expression Analysis</b>
-    <p>Raw 3 prime end sequencing data was obtained for 208 samples (Table 1). Each library was subsequently
-    trimmed and quality filtered using Trimmomatic (v0.36; (Bolger, Lohse, and Usadel 2014)) that removed
-    the TruSeq three prime adapter, trimmed the first three bp and last six bp (due to drops in quality scores),
-    performed sliding window quality filtration (4 bp step size, average quality score of 20), final whole-read
-    quality scores equal to twenty, and a final minimum read length of 50 bp. Libraries with poor quality, as
-    determined by FASTQC, or less than 1.5 million reads (due to insufficient sequence coverage) were
-    eliminated from the downstream analysis.</p>
-    <p>The RNA-Seq reads from remaining libraries were aligned to the JGI gene GTF (version 2.0) of the Setaria
-    viridis A10 genome assembly using STAR (v2.5.4; (Dobin et al. 2013)), and expression quantification was
-    performed using Kallisto (--single --single-overhang -l 200 -s 30 -t 5; (Bray et al. 2016)). Since this is end
-    sequencing, normalization of reads cannot be performed based off of gene or transcript lengths as is
-    typical in RNA-Seq processing (e.g. FPKM). Instead, we calculated reads per million (RPM) mapped, also
-    known as counts per million (CPM), which takes the read counts per gene, multiplies it by one million, and
-    then divides by the total number of reads mapped in the library.</p>
-    <p>Differential expression analysis was performed using the EdgeR R package using the normalized RPM
-    expression data ((Robinson, McCarthy, and Smyth 2010)). Genes with significantly higher or lower
-    expression levels in test conditions relative to paired controls were assessed. Eighteen paired tests were
-    performed as outlined in Table 2. An example R script can be found here: Link to script . No enrichment
-    tests were possible with samples from roots, as not enough samples survived quality score filtration for
-    comparisons to be made.</p>
+    <p>Raw 3 prime end sequencing data was obtained for 397 Setaria viridis cultivar ME034V samples. Each library 
+    was subsequently trimmed and quality filtered using Trimmomatic (v0.36; (Bolger, Lohse, and Usadel 2014)) that 
+    removed the TruSeq three prime adapter, trimmed the first three bp and last six bp (due to drops in quality scores), 
+    performed sliding window quality filtration (4 bp step size, average quality score of 20), final whole-read quality 
+    scores equal to twenty, and a final minimum read length of 50 bp. Libraries with poor quality, as determined by FASTQC, 
+    or less than 1.5 million reads (due to insufficient sequence coverage) were eliminated from the downstream analysis. 
+    Following these filtrations, 354 samples remained for processing through differential expression and coexpression 
+    network analyses. </p>
+    <p>Quantification of expression was performed using Kallisto (--single --single-overhang -l 200 -s 30 -t 5; Bray 
+    et al. 2016) on the raw reads of passing samples. The gene set used as query was the version 2.0 of the ME034V gene 
+    annotation set (unpublished), an improvement on the ME034V version 1.0 (Thielen and Pendleton et al. 2020). Differential 
+    expression analysis was performed using the EdgeR R package (Robinson, McCarthy, and Smyth 2010). Genes with significantly 
+    higher or lower expression levels (p <0.05) in test conditions relative to paired controls were assessed.</p>
     <b>Co-Expression Network Construction and Analysis</b>
     <p>An expression matrix was constructed with a column for every sample that passed initial library quality
     score filtration, and rows representing gene expression support (in the form of raw read counts) for all S.
@@ -49,15 +42,24 @@ class View:
     posisble gene pairs using the calc_pearsons_correlation.pl script, and mutual ranks were calculated with
     calc_mutual_rank.pl. Finally, co-expressed modules were delineated using ClusterONE ((Nepusz, Yu, and
     Paccanaro 2012)) with decay values of 5, 10, 25.</p>
+    <b>Works Cited</b>
+    <p>Bray, N.L., Pimentel, H., Melsted, P., and Pachter, L. (2016) “Near-optimal probabilistic RNA-seq quantification.” 
+    Nature Biotechnology 34: 525–527.</p>
+    <p>Love, M.I., Huber, W., & Anders, S. (2014). “Moderated estimation of fold change and dispersion for RNA-seq 
+    data with DESeq2.” Genome biology, 15(12): 550.</p>
+    <p>Robinson, M.D., McCarthy, D.J., & Smyth, G.K. (2010) “edgeR: a Bioconductor package for differential expression 
+    analysis of digital gene expression data." Bioinformatics 26(1): 139-140.</p>
+    <p>Thielen, P.M., Pendleton, A.L., Player, R.A., Bowden, K.V., Lawton, T.J., & Wisecaver, J.H. (2020). 
+    “Reference genome for the highly transformable Setaria viridis cultivar ME034V.” bioRxiv.</p>
     '''
     SAMPLES1_TITLE = 'Samples'
     FILTER1_TITLE  = 'Filter by Gene ID'
     FILTER1_TEXT   = '<b>Provide either Setaria or Arabidopsis gene IDs</b>'
-    FILTER1_HINT   = 'e.g. Sevir.5G400800, AT1G44575'
+    FILTER1_HINT   = 'Provide Setaria viridis ME034V gene IDs (eg: Svm7G0000010). You can also search for OrthoFinder-identified orthologs in ME034V to the following species/genomes: S. viridis A10 (eg: Sevir.5G400800), S. italica (eg: Seita.1G019400), sorghum (eg: Sobic.006G004700), rice (eg: Os03g27570), corn (eg: Zm00001d024902), Arabidopsis (eg: AT2G46040).'
     FILTER2_TITLE  = 'Filter by Function'
     FILTER2_TEXT   = '<b>Provide either GO ID or KEGG PATHWAY ID<b>'
-    FILTER2_HINT   = 'e.g. GO:0009522, KOG0190'
-    FILTER3_TITLE  = 'Filter by Expression'
+    FILTER2_HINT   = 'Provide keyword (eg: cytochrome p450), GO ID (eg: GO:0009522), Interpro ID (eg: IPR013087), KEGG ID (eg: K01835), or E.C. code (eg: EC:2.1.1.112)'
+    FILTER3_TITLE  = 'Filter by Gene Expression'
     FILTER4_TITLE  = 'Filtered Gene List'
     FILTER5_TEXT   = '<b>Set minimally expressed threshold</b>'
     FILTER6_TEXT   = 'TPM'
