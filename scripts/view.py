@@ -18,38 +18,50 @@ class View:
     WELCOME2_TITLE = 'Methods'
     WELCOME2_TEXT  = '''
     <b>Gene Differential Expression Analysis</b>
-    <p>Raw 3 prime end sequencing data was obtained for 397 Setaria viridis cultivar ME034V samples. Each library 
-    was subsequently trimmed and quality filtered using Trimmomatic (v0.36; (Bolger, Lohse, and Usadel 2014)) that 
-    removed the TruSeq three prime adapter, trimmed the first three bp and last six bp (due to drops in quality scores), 
-    performed sliding window quality filtration (4 bp step size, average quality score of 20), final whole-read quality 
-    scores equal to twenty, and a final minimum read length of 50 bp. Libraries with poor quality, as determined by FASTQC, 
-    or less than 1.5 million reads (due to insufficient sequence coverage) were eliminated from the downstream analysis. 
-    Following these filtrations, 354 samples remained for processing through differential expression and coexpression 
-    network analyses. </p>
-    <p>Quantification of expression was performed using Kallisto (--single --single-overhang -l 200 -s 30 -t 5; Bray 
-    et al. 2016) on the raw reads of passing samples. The gene set used as query was the version 2.0 of the ME034V gene 
-    annotation set (unpublished), an improvement on the ME034V version 1.0 (Thielen and Pendleton et al. 2020). Differential 
-    expression analysis was performed using the EdgeR R package (Robinson, McCarthy, and Smyth 2010). Genes with significantly 
-    higher or lower expression levels (p <0.05) in test conditions relative to paired controls were assessed.</p>
+    <p>Three prime end sequencing data was obtained for 397 Setaria viridis cultivar ME034V 
+    samples from leaf, sheath, and root tissue. Each library was subsequently trimmed and 
+    quality filtered using Trimmomatic v0.36 (Bolger, Lohse, and Usadel 2014) to remove the 
+    TruSeq three prime adapter, trim the first three bp and last six bp (due to drops in 
+    quality scores), perform sliding window quality filtration (4 bp step size, average 
+    quality score of 20), filter reads with final whole-read quality scores less than twenty, 
+    and filter reads with final minimum read lengths less than 50 bp. Libraries of poor 
+    quality, as determined by FASTQC (Andrews 2010), or with less than 1.5 million reads were 
+    eliminated from the downstream analysis. Following these filtrations, 354 samples remained 
+    for processing through differential expression and co-expression network analyses (see table
+     under the ‘Samples’ tab for the full list of samples and their descriptions)</p>
+    <p>Quantification of expression was performed using Kallisto (--single --single-overhang -l 
+    200 -s 30 -t 5; Bray et al. 2016) using version 2.0 of the ME034V gene annotation set 
+    (unpublished), an improvement on the ME034V version 1.0 (Thielen and Pendleton et al. 2020). 
+    Differential expression analysis was performed using the EdgeR R package (Robinson, McCarthy, 
+    and Smyth 2010) in paired tests of test versus control conditions.</p>
     <b>Co-Expression Network Construction and Analysis</b>
-    <p>The expression results from Kallisto, version 2.0 of the ME034V gene annotation set, and the 354 passing samples 
-    were used as input in the coexp-pipe coexpression network pipeline (https://github.rcac.purdue.edu/jwisecav/coexp-pipe). 
-    The pipeline includes an initial filtration step to remove any gene from the matrix that does not display expression 
-    support in at least three libraries and does not have a sum of at least ten reads mapped across all libraries. Next, 
-    the R package DeSeq2 (Love, Huber, and Anders 2014) transforms the filtered read counts using the Variance Stabilized 
-    Transformation (VST). Finally, pairwise Pearson’s correlation values are calculated between all possible gene pairs, 
-    followed by calculation of mutual ranks. Finally, co-expressed modules were delineated using ClusterONE (Nepusz, Yu, 
-    and Paccanaro 2012) with decay values of 5, 10, 25, 50, and 100. For the integration into the CoExplorer website, only 
-    results from decay values 5, 10, and 25 are linked.</p>
+    <p>The expression results (CPMs; counts per million) from Kallisto were used as input 
+    for the Mutual Ranks to Modules co-expression network pipeline 
+    (<a href="https://github.rcac.purdue.edu/jwisecav/coexp-pipe" target="_blank">coexp-pipe</a>). 
+    Genes without expression support (CPM > 0) in at least three libraries or with less than 
+    ten reads mapped across all libraries were excluded from the gene expression matrix. 
+    The expression matrix was then transformed using  the Variance Stabilized Transformation 
+    (VST) as implemented in the R package DeSeq2 (Love, Huber, and Anders 2014). Pairwise 
+    Pearson’s correlation coefficients were calculated between all possible gene pairs, 
+    followed by calculation of mutual rank (MR) scores. MR scores were transformed to network 
+    edge weights using the exponential decay function e^(-(MR-1/x)); three different networks 
+    were constructed with x set to 5, 10, and 25, respectively. Finally, co-expressed modules 
+    are delineated using ClusterONE (Nepusz, Yu, and Paccanaro 2012). Average expression values 
+    (post VST) are plotted in the ‘Plot by Experiment’ tab by experiment.</p>
     <b>Works Cited</b>
-    <p>Bray, N.L., Pimentel, H., Melsted, P., and Pachter, L. (2016) “Near-optimal probabilistic RNA-seq quantification.” 
-    Nature Biotechnology 34: 525–527.</p>
-    <p>Love, M.I., Huber, W., & Anders, S. (2014). “Moderated estimation of fold change and dispersion for RNA-seq 
-    data with DESeq2.” Genome biology, 15(12): 550.</p>
-    <p>Robinson, M.D., McCarthy, D.J., & Smyth, G.K. (2010) “edgeR: a Bioconductor package for differential expression 
+    <p>Andrews, S. (2010) "FastQC: a quality control tool for high throughput sequence data".</p>
+    <p>Bray, N.L., Pimentel, H., Melsted, P., and Pachter, L. (2016) “Near-optimal probabilistic 
+    RNA-seq quantification.” Nature Biotechnology 34: 525–527.</p>
+    <p>Love, M.I., Huber, W., & Anders, S. (2014). “Moderated estimation of fold change and 
+    dispersion for RNA-seq data with DESeq2.” Genome biology, 15(12): 550.</p>
+    <p>Nepusz, T., Yu, H., & Paccanaro, A. (2012) “Detecting overlapping protein complexes in 
+    protein-protein interaction networks.” Nature Methods, 9: 471.</p>
+    <p>Robinson, M.D., McCarthy, D.J., & Smyth, G.K. (2010) “edgeR: a Bioconductor package 
+    for differential expression 
     analysis of digital gene expression data." Bioinformatics 26(1): 139-140.</p>
-    <p>Thielen, P.M., Pendleton, A.L., Player, R.A., Bowden, K.V., Lawton, T.J., & Wisecaver, J.H. (2020). 
-    “Reference genome for the highly transformable Setaria viridis cultivar ME034V.” bioRxiv.</p>
+    <p>Thielen, P.M., Pendleton, A.L., Player, R.A., Bowden, K.V., Lawton, T.J., & Wisecaver, 
+    J.H. (2020). “Reference genome for the highly transformable Setaria viridis cultivar 
+    ME034V.” bioRxiv.</p>
     '''
     SAMPLES1_TITLE = 'Samples'
     FILTER1_TITLE  = 'Filter by Gene ID'
@@ -379,7 +391,7 @@ class View:
 
         tabs.append(ui.VBox(content))
 
-        # Tab 5: Plot-coexpress ======================================================
+        # Tab 5: Plot-coexpression ======================================================
 
         # Get list of networks and sort them using inline function that parses out numeric portion of network name
         networks = sorted(self.model.get_networks(),key=lambda x: int(x.split('_')[1]))
