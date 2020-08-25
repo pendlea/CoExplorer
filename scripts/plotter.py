@@ -72,6 +72,14 @@ class Plotter:
     NET_GENE_COLOR_EMPH = 'dodgerblue'
     NET_GENE_COLOR_NORM = 'lightgray'
 
+    DIF_INIT_TITLE      = '(No filter results.)'
+    DIF_PROMPT_TITLE    = '(No gene selected.)'
+    DIF_UPDATE_TITLE    = 'Updating plot...'
+    DIF_PREFIX_TITLE    = 'Differential Expression - '
+    DIF_FONT_SIZE       = 10
+    DIF_FIG_SIZE        = (22,24)
+
+
     def __init__(self,ctrl):
         self.ctrl = ctrl
         init_notebook_mode(connected=False)
@@ -229,7 +237,7 @@ class Plotter:
 
         self.line_plot.layout.title = self.LINE_PREFIX_TITLE + experiement
 
-    def clear_plots(self,heatmap_out_widget):
+    def clear_plots(self,heatmap_out_widget,differential_out_widget):
         '''Erase all data from all plot displays'''
 
         # Clear line plot
@@ -240,6 +248,10 @@ class Plotter:
 
         # Clear heatmap
         with heatmap_out_widget:
+            clear_output(wait=True)
+
+        # Clear differential
+        with differential_out_widget:
             clear_output(wait=True)
 
         # clear network plot
@@ -296,6 +308,29 @@ class Plotter:
             clear_output(wait=True)
             print(self.HEAT_PREFIX_TITLE + experiment)
             plt.show()
+
+    def draw_differential_plot(self,genes,out_widget):
+        '''Create new plot widget, fill with new diff. exp. plot, append to output'''
+
+        try:
+            self.out_plot_msg(out_widget,self.DIF_UPDATE_TITLE) # NOTE Also clears plot
+
+            with out_widget:
+
+                # TODO Put code here
+
+                clear_output(wait=True)
+
+                print(self.DIF_PREFIX_TITLE+':',end='')
+
+                for gene in genes:
+                    print(' '+gene,end='')
+
+                plt.show()
+        except:
+            self.ctrl.debug('draw_differential_plot(): EXCEPTION')
+            raise
+
 
     def draw_network_plot(self,module_id,abc_path,gene_list):
         '''Draw coexpression networks for modules that contain genes of interest & genes with desired expression patterns'''

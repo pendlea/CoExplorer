@@ -14,7 +14,7 @@ class Controller:
     VALUE = 'value' # for observe calls
 
     def __init__(self):
-        self.debugging     = False # NOTE Change to False to hide debug output
+        self.debugging     = True # NOTE Change to False to hide debug output
         self.debug_buffer  = []
         self.display_ready = False
 
@@ -51,6 +51,8 @@ class Controller:
 
         self.view.plotco_ddn_netw.observe(self.network_selected,self.VALUE)
         self.view.plotco_sel_modu.observe(self.module_selected ,self.VALUE)
+
+        self.view.plotdif_sel_genes.observe(self.diff_gene_selected,self.VALUE)
 
         # Only monitor the min expressed filter widgets - to change diff expressed widgets as needed
         for item in self.view.filter_conditons:
@@ -253,3 +255,13 @@ class Controller:
 
         self.plotter.draw_network_plot(module,abc_path,recovered)
 
+    def diff_gene_selected(self,change):
+        '''React to gene selection for diff exp plotting'''
+        try:
+            gene = change['owner'].value
+
+            if gene != self.view.EMPTY:
+                self.plotter.draw_differential_plot(gene,self.view.plotdif_img_disp)
+        except:
+            self.ctrl.debug('diff_gene_selected(): EXCEPTION')
+            raise

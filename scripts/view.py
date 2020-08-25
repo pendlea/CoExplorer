@@ -7,7 +7,7 @@ import urllib
 
 class View:
 
-    TABS           = ['Welcome','Samples','Filter','Plot by Experiment','Plot by Co-expression']
+    TABS           = ['Welcome','Samples','Filter','Plot by Experiment','Plot by Co-expression','Plot Differential Expression']
     WELCOME1_TITLE = 'Using This Tool'
     WELCOME1_TEXT  = '''
     <p>In the <b>Samples</b> tab above, you can review the available datasets and conditions</p>
@@ -18,49 +18,49 @@ class View:
     WELCOME2_TITLE = 'Methods'
     WELCOME2_TEXT  = '''
     <b>Gene Differential Expression Analysis</b>
-    <p>Three prime end sequencing data was obtained for 397 Setaria viridis cultivar ME034V 
-    samples from leaf, sheath, and root tissue. Each library was subsequently trimmed and 
-    quality filtered using Trimmomatic v0.36 (Bolger, Lohse, and Usadel 2014) to remove the 
-    TruSeq three prime adapter, trim the first three bp and last six bp (due to drops in 
-    quality scores), perform sliding window quality filtration (4 bp step size, average 
-    quality score of 20), filter reads with final whole-read quality scores less than twenty, 
-    and filter reads with final minimum read lengths less than 50 bp. Libraries of poor 
-    quality, as determined by FASTQC (Andrews 2010), or with less than 1.5 million reads were 
-    eliminated from the downstream analysis. Following these filtrations, 354 samples remained 
+    <p>Three prime end sequencing data was obtained for 397 Setaria viridis cultivar ME034V
+    samples from leaf, sheath, and root tissue. Each library was subsequently trimmed and
+    quality filtered using Trimmomatic v0.36 (Bolger, Lohse, and Usadel 2014) to remove the
+    TruSeq three prime adapter, trim the first three bp and last six bp (due to drops in
+    quality scores), perform sliding window quality filtration (4 bp step size, average
+    quality score of 20), filter reads with final whole-read quality scores less than twenty,
+    and filter reads with final minimum read lengths less than 50 bp. Libraries of poor
+    quality, as determined by FASTQC (Andrews 2010), or with less than 1.5 million reads were
+    eliminated from the downstream analysis. Following these filtrations, 354 samples remained
     for processing through differential expression and co-expression network analyses (see table
      under the ‘Samples’ tab for the full list of samples and their descriptions)</p>
-    <p>Quantification of expression was performed using Kallisto (--single --single-overhang -l 
-    200 -s 30 -t 5; Bray et al. 2016) using version 2.0 of the ME034V gene annotation set 
-    (unpublished), an improvement on the ME034V version 1.0 (Thielen and Pendleton et al. 2020). 
-    Differential expression analysis was performed using the EdgeR R package (Robinson, McCarthy, 
+    <p>Quantification of expression was performed using Kallisto (--single --single-overhang -l
+    200 -s 30 -t 5; Bray et al. 2016) using version 2.0 of the ME034V gene annotation set
+    (unpublished), an improvement on the ME034V version 1.0 (Thielen and Pendleton et al. 2020).
+    Differential expression analysis was performed using the EdgeR R package (Robinson, McCarthy,
     and Smyth 2010) in paired tests of test versus control conditions.</p>
     <b>Co-Expression Network Construction and Analysis</b>
-    <p>The expression results (CPMs; counts per million) from Kallisto were used as input 
-    for the Mutual Ranks to Modules co-expression network pipeline 
-    (<a href="https://github.rcac.purdue.edu/jwisecav/coexp-pipe" target="_blank">coexp-pipe</a>). 
-    Genes without expression support (CPM > 0) in at least three libraries or with less than 
-    ten reads mapped across all libraries were excluded from the gene expression matrix. 
-    The expression matrix was then transformed using  the Variance Stabilized Transformation 
-    (VST) as implemented in the R package DeSeq2 (Love, Huber, and Anders 2014). Pairwise 
-    Pearson’s correlation coefficients were calculated between all possible gene pairs, 
-    followed by calculation of mutual rank (MR) scores. MR scores were transformed to network 
-    edge weights using the exponential decay function e^(-(MR-1/x)); three different networks 
-    were constructed with x set to 5, 10, and 25, respectively. Finally, co-expressed modules 
-    are delineated using ClusterONE (Nepusz, Yu, and Paccanaro 2012). Average expression values 
+    <p>The expression results (CPMs; counts per million) from Kallisto were used as input
+    for the Mutual Ranks to Modules co-expression network pipeline
+    (<a href="https://github.rcac.purdue.edu/jwisecav/coexp-pipe" target="_blank">coexp-pipe</a>).
+    Genes without expression support (CPM > 0) in at least three libraries or with less than
+    ten reads mapped across all libraries were excluded from the gene expression matrix.
+    The expression matrix was then transformed using  the Variance Stabilized Transformation
+    (VST) as implemented in the R package DeSeq2 (Love, Huber, and Anders 2014). Pairwise
+    Pearson’s correlation coefficients were calculated between all possible gene pairs,
+    followed by calculation of mutual rank (MR) scores. MR scores were transformed to network
+    edge weights using the exponential decay function e^(-(MR-1/x)); three different networks
+    were constructed with x set to 5, 10, and 25, respectively. Finally, co-expressed modules
+    are delineated using ClusterONE (Nepusz, Yu, and Paccanaro 2012). Average expression values
     (post VST) are plotted in the ‘Plot by Experiment’ tab by experiment.</p>
     <b>Works Cited</b>
     <p>Andrews, S. (2010) "FastQC: a quality control tool for high throughput sequence data".</p>
-    <p>Bray, N.L., Pimentel, H., Melsted, P., and Pachter, L. (2016) “Near-optimal probabilistic 
+    <p>Bray, N.L., Pimentel, H., Melsted, P., and Pachter, L. (2016) “Near-optimal probabilistic
     RNA-seq quantification.” Nature Biotechnology 34: 525–527.</p>
-    <p>Love, M.I., Huber, W., & Anders, S. (2014). “Moderated estimation of fold change and 
+    <p>Love, M.I., Huber, W., & Anders, S. (2014). “Moderated estimation of fold change and
     dispersion for RNA-seq data with DESeq2.” Genome biology, 15(12): 550.</p>
-    <p>Nepusz, T., Yu, H., & Paccanaro, A. (2012) “Detecting overlapping protein complexes in 
+    <p>Nepusz, T., Yu, H., & Paccanaro, A. (2012) “Detecting overlapping protein complexes in
     protein-protein interaction networks.” Nature Methods, 9: 471.</p>
-    <p>Robinson, M.D., McCarthy, D.J., & Smyth, G.K. (2010) “edgeR: a Bioconductor package 
-    for differential expression 
+    <p>Robinson, M.D., McCarthy, D.J., & Smyth, G.K. (2010) “edgeR: a Bioconductor package
+    for differential expression
     analysis of digital gene expression data." Bioinformatics 26(1): 139-140.</p>
-    <p>Thielen, P.M., Pendleton, A.L., Player, R.A., Bowden, K.V., Lawton, T.J., & Wisecaver, 
-    J.H. (2020). “Reference genome for the highly transformable Setaria viridis cultivar 
+    <p>Thielen, P.M., Pendleton, A.L., Player, R.A., Bowden, K.V., Lawton, T.J., & Wisecaver,
+    J.H. (2020). “Reference genome for the highly transformable Setaria viridis cultivar
     ME034V.” bioRxiv.</p>
     '''
     SAMPLES1_TITLE = 'Samples'
@@ -461,6 +461,31 @@ class View:
 
         tabs.append(ui.VBox(content))
 
+        # Tab 6: Plot-differentialy  ======================================================
+
+        content = []
+        content.append(self.section('Text 1','Text 2'))
+
+        self.plotdif_sel_title = ui.HTML(value=self.FILTER17_TEXT,layout={'width':'99%'})
+        self.plotdif_sel_genes = ui.SelectMultiple(rows=10,options=[],value=[],layout={'width':'99%'})
+
+        self.plotdif_img_disp = ui.Output()
+
+        self.ctrl.plotter.out_plot_msg(self.plotdif_img_disp,self.ctrl.plotter.DIF_INIT_TITLE)
+
+        widgets = []
+
+        row = []
+        row.append( self.plotdif_sel_title)
+        row.append(ui.Label(value='',layout=ui.Layout(width='60%'))) # Cheat: spacer
+        widgets.append(ui.HBox(row))
+
+        widgets.append(self.plotdif_sel_genes)
+        widgets.append(self.plotdif_img_disp)
+        content.append(self.section('Text 4',widgets))
+
+        tabs.append(ui.VBox(content))
+
         # Tab bar ======================================================
 
         self.tabs = ui.Tab()
@@ -471,7 +496,7 @@ class View:
         self.tabs.children = tuple(tabs)
 
     def update_filtered_gene_list(self):
-        '''Update filtered genes list with new data'''
+        '''Update filtered genes list (and diff exp dropdown) with new data '''
 
         # Calc output line limit
         if self.filter_ddn_ndisp.value == self.ALL:
@@ -504,51 +529,69 @@ class View:
 
         # Column headers
         for anno in self.model.anno[1:]:  # Skip first header since its for gene ID
-            output += '<th class="op">'+anno+'</th>'
+            output         += '<th class="op">'+anno+'</th>'
 
         output += '</tr>'
 
-        # Build table rows
-        for count,(gene_id,annos) in enumerate(self.model.filter_results_annos.items()):
-            output += '<tr><td class="op">'+gene_id+'</td>'
+        try:
+            # Also build new options for gene selection in diff. exp. plotting
+            plotdif_options = []
 
-            for key,value in annos.items():
-                output += '<td class="op">'+value+'</td>'
+            # Build table rows
+            for count,(gene_id,annos) in enumerate(self.model.filter_results_annos.items()):
+                output       += '<tr><td class="op">'+gene_id+'</td>'
+                plotdif_line  = gene_id + ' | '
 
-            output += '</tr>'
+                for key,value in annos.items():
+                    output       += '<td class="op">'+value+'</td>'
+                    plotdif_line += value + ' '
 
-            if count+1 >= limit:
-                break
+                output += '</tr>'
 
-        output += '</table>' # End table
+                plotdif_options.append((plotdif_line,gene_id)) # [('One',1),('Two',2)]
 
-        self.filter_html_output.value = output  # Update UI
+                if count+1 >= limit:
+                    break
+
+            output += '</table>' # End table
+
+            self.filter_html_output.value  = output             # Update filtered gene list (search results)
+            self.plotdif_sel_title.value   = self.model.anno[0][1:] + ' | ' + ' '.join(self.model.anno[1:]) # Update diff exp gene menu's title
+            self.plotdif_sel_genes.options = plotdif_options    # Update diff exp gene menu
+        except:
+            self.ctrl.debug('update_filtered_gene_list(): EXCEPTION')
+            raise
 
     def set_plot_status(self,enable):
         '''Change status of plot-related widgets based on availability of filter results'''
 
         pltr = self.ctrl.plotter
-        pltr.clear_plots(self.plotex_img_dispp_hm)
+        pltr.clear_plots(self.plotex_img_dispp_hm,self.plotdif_img_disp)
+
+        self.plotdif_sel_genes.value = [] # TODO Delete if dropdown
 
         if enable:
             self.plotex_ddn_selex_lg.disabled = False
             self.plotex_ddn_selex_hm.disabled = False
             self.plotco_ddn_netw.disabled     = False
+            self.plotdif_sel_genes.disabled    = False
 
             pltr.line_plot.layout.title = pltr.LINE_PROMPT_TITLE
             pltr.net_plot.layout.title  = pltr.NET_PROMPT_TITLE
 
             pltr.out_plot_msg(self.plotex_img_dispp_hm,pltr.HEAT_PROMPT_TITLE)
-
+            pltr.out_plot_msg(self.plotdif_img_disp   ,pltr.DIF_PROMPT_TITLE )
         else:
             self.plotex_ddn_selex_lg.disabled = True
             self.plotex_ddn_selex_hm.disabled = True
             self.plotco_ddn_netw.disabled     = True
+            self.plotdif_sel_genes.disabled    = True
 
             pltr.line_plot.layout.title = pltr.LINE_INIT_TITLE
             pltr.net_plot.layout.title  = pltr.NET_INIT_TITLE
 
             pltr.out_plot_msg(self.plotex_img_dispp_hm,pltr.HEAT_INIT_TITLE)
+            pltr.out_plot_msg(self.plotdif_img_disp   ,pltr.DIF_INIT_TITLE )
             self.ctrl.set_module_data([self.NO_MODULE_DATA],[(None,None)])
 
     def get_module_export_header(self):
