@@ -7,6 +7,7 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
 # For heatmap plots
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import pandas as pd
 import seaborn as sns
 from IPython.display import clear_output
@@ -75,7 +76,7 @@ class Plotter:
     DIF_INIT_TITLE      = '(No filter results.)'
     DIF_PROMPT_TITLE    = '(No gene selected.)'
     DIF_UPDATE_TITLE    = 'Updating plot...'
-    DIF_PREFIX_TITLE    = 'Differential Expression - '
+    DIF_PREFIX_TITLE    = 'Differential Expression:'
     DIF_FONT_SIZE       = 10
     DIF_FIG_SIZE        = (22,24)
 
@@ -309,24 +310,77 @@ class Plotter:
             print(self.HEAT_PREFIX_TITLE + experiment)
             plt.show()
 
-    def draw_differential_plot(self,genes,out_widget):
+    def draw_differential_plot(self,genes,results,conds,out_widget):
         '''Create new plot widget, fill with new diff. exp. plot, append to output'''
 
         try:
             self.out_plot_msg(out_widget,self.DIF_UPDATE_TITLE) # NOTE Also clears plot
 
             with out_widget:
-
-                # TODO Put code here
-
                 clear_output(wait=True)
 
-                print(self.DIF_PREFIX_TITLE+':',end='')
-
                 for gene in genes:
-                    print(' '+gene,end='')
+                    print(self.DIF_PREFIX_TITLE+' '+gene)
 
-                plt.show()
+                    fchanges    = []
+                    palette     = {}
+
+                    # Prep: For this gene 1) build list of fold change values 2) Build color palette
+                    for i in range(len(conds)):
+                        cond        = conds[i]
+                        pvalue      = float(results[gene][i][1])
+                        fchange     = float(results[gene][i][3])
+
+                        fchanges.append(fchange)
+
+                        # Color palette based on fold changes (up vs down) and significance (p-values)
+                        if   pvalue < 0.01 and fchange < 0: palette[cond] = '#0072b2' # Sig down
+                        elif pvalue < 0.05 and fchange < 0: palette[cond] = '#56b4e9' # "
+                        elif pvalue < 0.01 and fchange > 0: palette[cond] = '#f77f00' # Sig up
+                        elif pvalue < 0.05 and fchange > 0: palette[cond] = '#fcbf49' # "
+                        else:                               palette[cond] = 'grey'    # Non sig
+
+                    # Create plot for this gene
+
+                    fig,ax = plt.subplots(figsize=(12,8))
+                    g      = sns.barplot(x=fchanges,y=conds,palette=palette)  # horizontal bar chart
+
+                    # Set xaxis limits based on abs value of max fold change for gene
+                    max_fchange = max(fchanges)
+                    g.set(xlim=(-1*max_fchange-(0.15*max_fchange),max_fchange+(0.15*max_fchange)))
+
+                    # Axis labels
+                    g.set_xlabel('Fold Change',fontsize=14,fontweight='bold')
+                    g.set_ylabel('Condition'  ,fontsize=14,fontweight='bold')
+
+                    # For legend, shrink current axis's height by 10% on the bottom
+                    box = ax.get_position()
+                    ax.set_position([box.x0,box.y0+box.height*0.1,box.width,box.height*0.9])
+
+                    # Create color samples for legend
+                    color_lines = [ Line2D([0],[0],color='#0072b2' ,lw=4),
+                                    Line2D([0],[0],color='#56b4e9',lw=4),
+                                    Line2D([0],[0],color='#f77f00',lw=4),
+                                    Line2D([0],[0],color='#fcbf49',lw=4),
+                                    Line2D([0],[0],color='gray'   ,lw=4)]
+
+                    # Create legend, place below plot
+                    ax.legend(color_lines,
+                            [    'Highly underexpressed (p < 0.01)'
+                                ,'Underexpressed (p < 0.05)'
+                                ,'Overexpressed (p < 0.05)'
+                                ,'Highly overexpressed (p < 0.01)'
+                                ,'No DE (p >= 0.05)']
+                            ,loc            = 'upper center'
+                            ,bbox_to_anchor = (0.5, -0.1)
+                            ,fancybox       = True
+                            ,shadow         = True
+                            ,ncol           = 3
+                    )
+
+                    # Plot
+                    plt.tight_layout()
+                    plt.show()
         except:
             self.ctrl.debug('draw_differential_plot(): EXCEPTION')
             raise

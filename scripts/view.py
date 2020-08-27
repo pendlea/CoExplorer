@@ -127,6 +127,12 @@ class View:
 
     PLOTCO2_TITLE  = 'Network Graph of Selected Module'
     PLOTCO3_TEXT   = '<br><b>Select a module</b>'
+
+    PLOTDE1_TEXT   = 'Select gene(s) to plot. Use Ctrl (Cmd) key while selecting additional genes. Use Shift key to select a range of genes.'
+    PLOTDE2_TEXT   = 'Create Plot(s)'
+    PLOTDE3_TEXT   = 'Select Gene(s) and Plot Differential Expression'
+    PLOTDE4_TEXT   = 'Genes and Annotations'
+
     PLOT_DOWNLOAD  = 'Download Selected Plot'
     MODULE_HEADER  = [
         ["          ","       ","           ","Genes in","Query Genes","Jaccard","% Query Genes","Recovered                      ","Missing Query                                       ","All Genes                                       "],
@@ -464,25 +470,24 @@ class View:
         # Tab 6: Plot-differentialy  ======================================================
 
         content = []
-        content.append(self.section('Text 1','Text 2'))
+        content.append(self.section(self.PLOTEX1_TITLE,self.PLOTDE1_TEXT))
 
-        self.plotdif_sel_title = ui.HTML(value=self.FILTER17_TEXT,layout={'width':'99%'})
+        self.plotdif_sel_title = ui.HTML(value=self.PLOTDE4_TEXT,layout={'width':'99%'})
         self.plotdif_sel_genes = ui.SelectMultiple(rows=10,options=[],value=[],layout={'width':'99%'})
-
-        self.plotdif_img_disp = ui.Output()
+        self.plotdif_img_disp  = ui.Output()
+        self.plotdif_btn_plot  = ui.Button(description=self.PLOTDE2_TEXT,icon='bar-chart',layout=self.LO20)
 
         self.ctrl.plotter.out_plot_msg(self.plotdif_img_disp,self.ctrl.plotter.DIF_INIT_TITLE)
 
         widgets = []
-
-        row = []
-        row.append( self.plotdif_sel_title)
-        row.append(ui.Label(value='',layout=ui.Layout(width='60%'))) # Cheat: spacer
-        widgets.append(ui.HBox(row))
-
+        widgets.append(self.plotdif_sel_title)
         widgets.append(self.plotdif_sel_genes)
+        widgets.append(self.plotdif_btn_plot)
+        widgets.append(ui.Label(value='',layout=ui.Layout(width='60%'))) # Cheat: spacer
         widgets.append(self.plotdif_img_disp)
-        content.append(self.section('Text 4',widgets))
+        widgets.append(ui.Label(value='',layout=ui.Layout(width='60%'))) # Cheat: spacer
+
+        content.append(self.section(self.PLOTDE3_TEXT,widgets))
 
         tabs.append(ui.VBox(content))
 
@@ -496,7 +501,7 @@ class View:
         self.tabs.children = tuple(tabs)
 
     def update_filtered_gene_list(self):
-        '''Update filtered genes list (and diff exp dropdown) with new data '''
+        '''Update filtered genes list (and diff exp selection) with new data '''
 
         # Calc output line limit
         if self.filter_ddn_ndisp.value == self.ALL:
@@ -540,7 +545,7 @@ class View:
             # Build table rows
             for count,(gene_id,annos) in enumerate(self.model.filter_results_annos.items()):
                 output       += '<tr><td class="op">'+gene_id+'</td>'
-                plotdif_line  = gene_id + ' | '
+                plotdif_line  = gene_id + ': '
 
                 for key,value in annos.items():
                     output       += '<td class="op">'+value+'</td>'
@@ -556,7 +561,6 @@ class View:
             output += '</table>' # End table
 
             self.filter_html_output.value  = output             # Update filtered gene list (search results)
-            self.plotdif_sel_title.value   = self.model.anno[0][1:] + ' | ' + ' '.join(self.model.anno[1:]) # Update diff exp gene menu's title
             self.plotdif_sel_genes.options = plotdif_options    # Update diff exp gene menu
         except:
             self.ctrl.debug('update_filtered_gene_list(): EXCEPTION')
