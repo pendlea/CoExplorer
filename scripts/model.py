@@ -347,7 +347,7 @@ class Model:
         '''Dump filtered gene data to output widget for export'''
 
         data =  self.HEADER_FLAG + self.HEADER_FLAG + self.OUTPUT_FORMAT_HEADER + '\n'
-        data += self.HEADER_FLAG + self.GENE_ID + '\t'.join(self.cond) + '\t' + '\t'.join(self.anno) + '\n'
+        data += self.HEADER_FLAG + self.GENE_ID + '\t' + '\t'.join(self.cond) + '\t' + '\t'.join(self.anno[1:]) + '\n'
 
         try:
             for gene_id,parsed_row in self.filter_results.items():

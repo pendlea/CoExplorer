@@ -572,7 +572,7 @@ class View:
         pltr = self.ctrl.plotter
         pltr.clear_plots(self.plotex_img_dispp_hm,self.plotdif_img_disp)
 
-        self.plotdif_sel_genes.value = [] # TODO Delete if dropdown
+        self.plotdif_sel_genes.value = []
 
         if enable:
             self.plotex_ddn_selex_lg.disabled = False
