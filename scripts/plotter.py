@@ -360,7 +360,7 @@ class Plotter:
                     ax.set_position([box.x0,box.y0+box.height*0.1,box.width,box.height*0.9])
                     
                     # Add vertical line along x=0
-                    ax.axvline(x=1, color='black')
+                    ax.axvline(x=0, color='black')
                     
                     # Create color samples for legend
                     color_lines = [ Line2D([0],[0],color='#0072b2' ,lw=4),
