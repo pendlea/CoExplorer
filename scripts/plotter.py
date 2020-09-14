@@ -349,7 +349,8 @@ class Plotter:
 
                     # Set xaxis limits based on abs value of max fold change for gene
                     max_fchange = max(fchanges)
-                    g.set(xlim=(-1*max_fchange-(0.35*max_fchange),max_fchange+(0.35*max_fchange)))
+                    #g.set(xlim=(-1*max_fchange-(0.35*max_fchange),max_fchange+(0.35*max_fchange)))
+                    g.set(xlim=(-1*max_fchange-1,max_fchange+1))
 
                     # Axis labels
                     g.set_xlabel('Fold Change',fontsize=14,fontweight='bold')
