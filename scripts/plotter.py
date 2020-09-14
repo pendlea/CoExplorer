@@ -370,7 +370,7 @@ class Plotter:
                     ax.legend(color_lines,
                             [    'Highly underexpressed (p < 0.01)'
                                 ,'Underexpressed (p < 0.05)'
-                                ,'Highly overexpressed (p < 0.01)',
+                                ,'Highly overexpressed (p < 0.01)'
                                 ,'Overexpressed (p < 0.05)'
                                 ,'No DE (p >= 0.05)']
                             ,loc            = 'upper center'
