@@ -358,14 +358,17 @@ class Plotter:
                     # For legend, shrink current axis's height by 10% on the bottom
                     box = ax.get_position()
                     ax.set_position([box.x0,box.y0+box.height*0.1,box.width,box.height*0.9])
-
+                    
+                    # Add vertical line along x=0
+                    axvline(x=1, color='black')
+                    
                     # Create color samples for legend
                     color_lines = [ Line2D([0],[0],color='#0072b2' ,lw=4),
                                     Line2D([0],[0],color='#56b4e9',lw=4),
                                     Line2D([0],[0],color='#f77f00',lw=4),
                                     Line2D([0],[0],color='#fcbf49',lw=4),
                                     Line2D([0],[0],color='gray'   ,lw=4)]
-
+            
                     # Create legend, place below plot
                     ax.legend(color_lines,
                             [    'Highly underexpressed (p < 0.01)'
