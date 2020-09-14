@@ -212,6 +212,8 @@ class Plotter:
             for key,value in annos[gene_id].items():
 
                 if not value == '':
+                    if len(value) > 50:
+                        value = value[0:47] + '...'
                     text += key              + ': ' + value   + '<br>'
         else:
             text += '(no data)<br>'
