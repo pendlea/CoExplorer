@@ -186,7 +186,7 @@ cd /Users/wisecaver-amanda/Documents/GitHub/CoExplorer
 Run the build step:
 
 ```
-docker build -t <image_name> --build-arg repourl=<repository_url> --build-arg repodir=<repository_name> --build-arg repodir=<datapath> <path_to_data_files> <path_to_dockerfile>
+docker build -t <image_name> --build-arg repourl=<repository_url> --build-arg repodir=<repository_name> --build-arg datapath=<datapath> <path_to_data_files> <path_to_dockerfile>
 ```
 
 For example, the code I ran was:
