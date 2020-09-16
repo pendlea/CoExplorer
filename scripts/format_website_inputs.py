@@ -10,6 +10,7 @@
 from optparse import  OptionParser
 import sys
 import os
+import pandas as pd
 import numpy as np
 
 ##############################################################################
@@ -132,6 +133,7 @@ print('\n' + 'Processing the sample file: \n %s ' % sampleFile +  '\n')
 
 samples, conditions, experiments = [], [], []
 sampleDict = {}
+condition_list = []
 
 lineCount = 0
 for line in open(sampleFile, 'r'):
@@ -155,7 +157,9 @@ for line in open(sampleFile, 'r'):
 		sampleDict[sample]['Condition'] = condition
 		sampleDict[sample]['Experiment'] = experiment
 
-
+	#Track in condition_list
+	condition_list.append([condition, sample])
+	
 #Check that there are no redundant sample identifiers
 if len(sampleDict.keys()) != len(samples): #len(np.unique(sampleDict.keys())):
 	print('ERROR: Are there redundant sample identifiers in your samples?')
@@ -165,11 +169,18 @@ if len(sampleDict.keys()) != len(samples): #len(np.unique(sampleDict.keys())):
 	sys.exit()
 else:
 	print('%i samples in input' % len(sampleDict.keys()))
+
 print('%i conditions in input' % len(np.unique(conditions)))
-print('%i experiments in input' % len(np.unique(experiments)))
+print('conditions: ')
+print(np.unique(conditions))
+print('\n\n' + '%i experiments in input' % len(np.unique(experiments)))
+print('experiments: ')
+print(np.unique(experiments))
 
 
-print(sampleDict.keys())
+#Make condition_list a dataframe
+condition_df = pd.DataFrame(condition_list, columns=['Condition', 'Sample'])
+print(condition_df)
 
 
 ####################################################################
@@ -358,7 +369,6 @@ if homologFile != '':
 else:
 	print('\nNo homologs file to parse')
 
-sys.exit()
 
 
 ####################################################################
@@ -382,9 +392,11 @@ pvalueColumn = options.de_pvalue_column
 FDRColumn = options.de_FDR_column
 logFCColumn = options.de_logFC_column
 
+#Create empty dataframe to track global DE results
+global_de_df = pd.DataFrame()
 
-#Store all de values in a dictionary where the key is the gene
-deDict = {}
+#Track how many samples/condition DE that has been processed
+sampleCount = 0 
 
 #If not an empty variable, then start parsing
 if de_fileList != '':
@@ -407,24 +419,28 @@ if de_fileList != '':
 		print('ERROR: Differential expression file provided but no indication of which column has the log fold change value')
 		print('Exiting...')
 		sys.exit()
-		
+	
 	#Now parse the input file to determine the paths to those we need for writing out
 	lineCount = 0
 	for line in open(de_fileList, 'r'):
 		lineCount += 1
-		
-		if '#' in line[0] or lineCount == 1: #skip header
+	
+		if '#' in line[0] or lineCount == 1: #skip header or marked out lines
 			continue
-			
-		line = line.rstrip().split('\t') #strip and split tab by line
 		
+		line = line.rstrip().split('\t') #strip and split tab by line
+	
+		#Add one to sample count
+		sampleCount += 1
+	
 		#Determine condition
 		condition = line[0]
 		de_conditions.append(condition) #for tracking 
-		
+	
 		if condition not in conditions: #make sure the condition is in our condition list
 			print('ERROR: the condition below is not in our global conditions list:')
 			print(condition + '\n', line)
+			print('Please check that conditions in your DE file list match that of your sample/condition file ')
 			print("Exiting...")
 			sys.exit()
 		#Determine experiment
@@ -432,12 +448,16 @@ if de_fileList != '':
 		if experiment not in experiments: #make sure the condition is in our condition list
 			print('ERROR: the experiment below is not in our global experiment list:')
 			print(experiment + '\n', line)
+			print('Please check that experiments in your DE file list match that of your sample/condition file ')
 			print("Exiting...")
 			sys.exit()	
-			
+		
 		#Determine DE file with results
 		defile = line[2]
-		
+	
+		#Reset for tracking with each new file
+		genes, de_list = [], [] #clear both
+	
 		#Read through the de file to extract out the data we want	
 		de_lineCount = 0		
 		for line in open(defile, 'r'):
@@ -446,38 +466,45 @@ if de_fileList != '':
 			#   column specified by user to be the pvalue is a float or not 
 			if de_lineCount == 1:
 				continue
-				
+			
 			line = line.rstrip().split('\t') # split the file by tab
 			geneID = line[int(geneColumn) - 1] #get gene ID
-			pvalue = line[int(pvalueColumn) - 1] #get pvalue
-			FDR = line[int(FDRColumn) - 1] #get FDR
-			logFC = line[int(logFCColumn) - 1] #get log fold change
-			
-			#add geneID to dictionary for storing all data if not already in there
-			if geneID not in deDict.keys():
-				deDict[geneID] = {}
-			
-			#now create another key linked to that gene for the condition linked to this file
-			# as determined by the de_file_list FileCache
-			deDict[geneID][condition] = ['', pvalue, FDR, logFC] #keep index =0 empty for now
-			
-	
+			pvalue = float(line[int(pvalueColumn) - 1]) #get pvalue
+			FDR = float(line[int(FDRColumn) - 1]) #get FDR
+			logFC = float(line[int(logFCColumn) - 1]) #get log fold change
+		
+			#Now add information to the gene
+			genes.append(geneID)
+			de_list.append('%f,%f,%f' % (pvalue, FDR, logFC))
+		
+		#Store as a dataframe
+		de_df = pd.DataFrame(de_list, columns=[condition], index=[genes])
+				
+		#Merge with global df after each new condition is processed
+		global_de_df = pd.concat([global_de_df, de_df], axis=1)
+
+	#Name the index of the final dataframe to be the genes
+	global_de_df.index = genes
+
+	#Sort the dataframe by gene so we can merge faster with the expression data down the road
+	global_de_df = global_de_df.sort_index()
+
+	#Get sneak peak of the data frame
+	global_de_df.head()
+
 #else, skip as there's no file to parse
 else:
 	print('\nNo differential expression description/path file to parse')
 
 
-if len(deDict.keys()) > 0:
+if len(genes) > 0:
 	#Report how many genes' differential expression data was stored:	
-	print('%i genes stored in differential expression dictionary deDict' % len(deDict.keys()))
+	print('%i genes stored in differential expression dataframe' % len(genes))
 
 	print('The following differential expression conditions were processed:')
 	print('\t'.join(map(str, de_conditions)))
 
 
-
-
-"""
 ################################################
 #### Total expression profiles (e.g. Kallisto, Cufflinks, Salmon, etc. per-gene expression
 ####     quantification files. Must be tab delimited)
@@ -486,201 +513,35 @@ if len(deDict.keys()) > 0:
 print('\n\n\n', '####### MEAN EXPRESSION CALCULATIONS', '\n')
 
 #Get file and column extraction data from user provided information
-expressionFile = options.exp_file_list
-geneColumn = options.exp_gene_column
-metric = options.exp_metric
-expValueColumn = options.exp_value_column
+#expressionFile = '/depot/jwisecav/data/pendlea/coexpression_assessments/development/52_conditions_newpipeline/Setaria_A10_normalized_vst_transformed.matrix'
+expressionFile = options.exp_matrix
 
-
-#To track total expression data, values and conditions:
-expDict = {}
-condition_expDict = {}
-sample_expDict = {}
-exp_conditions = [] #Keep track of which conditions we even quantified expression on 
+#Read in gene expression matrix using pandas
+exp_data_table = pd.read_csv(expressionFile, delimiter='\t')
 
 
 if expressionFile != '':
-	#Make sure that the user provided all relevant information
-	if geneColumn == '':
-		print('ERROR: Expression quantification file provided but no indication of which column has the gene ID')
-		print('Exiting...')
-		sys.exit()
-	if expValueColumn == '':
-		print('ERROR: Expression quantification file provided but no indication of which column has the expression values (e.g. TPM, FPKM)')
-		print('Exiting...')
-		sys.exit()
+	#Create an empty dataframe to store the global (i.e. all conditions) gene average expression levels
+	global_mean_df = pd.DataFrame()
 
-	lineCount = 0
-	#Parse the user-provided file that links each sample to its expression quantification fiel
-	for line in open(expressionFile, 'r'):
-		lineCount += 1
-		#skip header	
-		if lineCount == 1:
-			continue
+	for condition in np.unique(de_conditions):     
+		#For each condition in the differential expression analysis, 
+		#.  let's pull out the samples that represent that condition from the expression matrix
+		samples = condition_df['Sample'].loc[condition_df['Condition'] == condition]
 		
-		line=line.rstrip().split('\t') #strip and split tab by line
-		sample = line[0] #get sampleID
-		pathToFile = line[1] #get path to abundance file
-		
-		#Check that the sample is in the dictionary
-		#If not, it may have been ignored for QA/QC reasons, but still alert the user
-		if sample not in sampleDict.keys():
-			print('ERROR: Sample not in sample list provided in samples.txt:\n %s \nSkipping...' % sample)
-			continue
-		
-		lineCount = 0 #track line counts for skipping header line
-		for l in open(pathToFile, 'r'):
-			lineCount += 1 
-			
-			if lineCount ==1: #skip header
-				continue
-			
-			l = l.rstrip().split('\t') #strip and split tab by line
-			geneID = l[int(geneColumn)-1]
-
-			##FOR SETARIA PROJECT ONLY!!!!!!!!!!!!!!!!!!!!!!!!
-			geneID = geneID.rsplit('.',3)[0]
-
-			
-			#if gene ID not already in the expDict dictionary, then add
-			if geneID not in sample_expDict.keys():
-				#Create empty keys for each gene ID 
-				sample_expDict[geneID] = {}
-				condition_expDict[geneID] = {}
-				
-				#Create empty values for each sample we want to store the exp. data for
-				for s in sampleDict.keys():
-					#expDict[geneID][s] = ''
-					sample_expDict[geneID][s] = ''
-					
-				#Now create empty arrays linked to each possible condition 
-				for c in conditions:
-					#expDict[geneID][c] = []
-					condition_expDict[geneID][c] = []
-			
-			#Get the expression Value
-			expValue = float(l[int(expValueColumn)-1])
-			
-			#Keep track of the expression across each condition as we will want to 
-			#   calculate the average expression value for plotting in the jupyter notebook
-			#Determine the condition that this sample is linked to:
-			Condition = sampleDict[sample]['Condition']
-			exp_conditions.append(Condition)
-			condition_expDict[geneID][Condition].append(expValue)
-			
-			#Now also track per sample
-			sample_expDict[geneID][sample] = expValue
+		#Get average for the samples within that condition
+		mean = exp_data_table[exp_data_table.columns.intersection(samples)].mean(axis=1)
+		#Store as dataframe, column name = condition
+		mean_df = pd.DataFrame(mean, columns=[condition])
+   
+		#For each condition processed, add to the global_mean dataframe
+		global_mean_df = pd.concat([global_mean_df, mean_df], axis=1)
 	
-		##############TESTING
-		#break
-	
-#else, skip as there's no file to parse
-else:
-	print('\nNo quantification of expression description/path file to parse')
+	#Check out final matrix
+	global_mean_df.head()
 
-#Now report how many genes expression data was stored:
-if len(expDict.keys()) > 0: #If there's even a populated dictionary, report gene count
-	print('%i genes stored in differential expression dictionary deDict' % len(deDict.keys()))
-
-
-#If the dictionaries of either of 
-if len(condition_expDict.keys()) > 0 and len(deDict.keys()) > 0:
-	for geneID in condition_expDict.keys():
-		for condition in de_conditions: #expDict[geneID].keys():
-			#If the gene isn't in the differential expression dictionary (deDict) at all,
-			#   then skip it
-			if geneID not in deDict.keys():
-				continue
-			
-			else: #meaning the gene IS in the dictionary:
-				if len(condition_expDict[geneID][condition]) == 0 or condition_expDict[geneID][condition] == '':
-					averageExpression = 0.0
-				if len(condition_expDict[geneID][condition]) == 1:
-					averageExpression = condition_expDict[geneID][condition][0]
-				if len(condition_expDict[geneID][condition]) > 1:
-					averageExpression = np.mean(condition_expDict[geneID][condition])
-			deDict[geneID][condition][0] = averageExpression
-
-"""
-
-################################################
-#### Total expression profiles (e.g. Kallisto, Cufflinks, Salmon, etc. per-gene expression
-####     quantification files. Must be tab delimited)
-################################################
-
-print('\n\n\n', '####### MEAN EXPRESSION CALCULATIONS', '\n')
-
-#Get file and column extraction data from user provided information
-expressionFile = '/depot/jwisecav/data/pendlea/coexpression_assessments/development/52_conditions_newpipeline/Setaria_A10_normalized_vst_transformed.matrix'
-#geneColumn = options.exp_gene_column
-#metric = options.exp_metric
-#expValueColumn = options.exp_value_column
-
-
-#To track total expression data, values and conditions:
-sample2Column = {}
-expDict = {}
-condition_expDict = {}
-sample_expDict = {}
-exp_conditions = [] #Keep track of which conditions we even quantified expression on 
-
-
-if expressionFile != '':
-	lineCount = 0 #For tracking line numbers (distinguishing headers from data lines)
-	
-	#Parse the user-provided file that links each sample to its expression quantification fiel
-	for line in open(expressionFile, 'r'):
-		lineCount += 1
-		line=line.rstrip().split('\t') #strip and split tab by line
-		
-		##HEADER LINE
-		#parse header to get sample identifiers
-		if lineCount == 1:
-			for i in range(0,len(line)):
-				sample = line[i]
-				#Check that the sample is in the dictionary
-				#If not, it may have been ignored for QA/QC reasons, but still alert the user
-				if sample not in sampleDict.keys():
-					print('ERROR: Sample not in sample list provided in samples.txt:\n %s \nSkipping...' % sample)
-					continue
-				sample2Column[i+1] = sample
-			continue
-		
-		#DATA LINES		
-		#Now parse the data lines which are lines 2 and on		
-		geneID = line[0]
-		
-		#if gene ID not already in the expDict dictionary, then add
-		if geneID not in sample_expDict.keys():
-			#Create empty keys for each gene ID 
-			sample_expDict[geneID] = {}
-			condition_expDict[geneID] = {}
-				
-		#Create empty values for each sample we want to store the exp. data for
-		for s in sampleDict.keys():
-			sample_expDict[geneID][s] = ''
-					
-			#Now create empty arrays linked to each possible condition 
-			for c in conditions:
-				condition_expDict[geneID][c] = []
-		
-		#Get the expression values
-		for i in range(1,len(line)):
-			#Get the expression Value
-			expValue = float(line[i])
-		
-			#Determine which sample it belongs to based on which column you're reading in
-			sample = sample2Column[i]
-			
-			#Keep track of the expression across each condition as we will want to 
-			#   calculate the average expression value for plotting in the jupyter notebook
-			#Determine the condition that this sample is linked to:
-			Condition = sampleDict[sample]['Condition']
-			exp_conditions.append(Condition)
-			condition_expDict[geneID][Condition].append(expValue)
-		
-			#Now also track per sample
-			sample_expDict[geneID][sample] = expValue
+	#Sort the dataframe by gene name (i.e. index) for merging with de dataframe
+	global_mean_df = global_mean_df.sort_index()
 
 
 	
@@ -689,27 +550,41 @@ else:
 	print('\nNo quantification of expression description/path file to parse')
 
 #Now report how many genes expression data was stored:
-if len(expDict.keys()) > 0: #If there's even a populated dictionary, report gene count
-	print('%i genes stored in expression dictionary deDict' % len(expDict.keys()))
+if len(global_mean_df.index) > 0: #If there's even a populated dataframe, report gene count
+	print('%i genes stored in expression dataframe' % len(global_mean_df.index))
 
 
-#If the dictionaries of either of 
-if len(condition_expDict.keys()) > 0 and len(deDict.keys()) > 0:
-	for geneID in condition_expDict.keys():
-		for condition in de_conditions: #expDict[geneID].keys():
-			#If the gene isn't in the differential expression dictionary (deDict) at all,
-			#   then skip it
-			if geneID not in deDict.keys():
-				continue
-			
-			else: #meaning the gene IS in the dictionary:
-				if len(condition_expDict[geneID][condition]) == 0 or condition_expDict[geneID][condition] == '':
-					averageExpression = 0.0
-				if len(condition_expDict[geneID][condition]) == 1:
-					averageExpression = condition_expDict[geneID][condition][0]
-				if len(condition_expDict[geneID][condition]) > 1:
-					averageExpression = np.mean(condition_expDict[geneID][condition])
-			deDict[geneID][condition][0] = averageExpression
+
+
+################################################
+##### MERGE THE DE AND EXPRESSION DATAFRAMES
+################################################
+
+
+global_mean_df_index = global_mean_df.index
+
+print('%i genes in global gene expression dataframe' % len(global_mean_df.index))
+
+global_de_df_index = global_de_df.index
+print('%i genes in global differential expression dataframe' % len(global_de_df.index))
+
+#Find intersection between two so 
+len(global_mean_df_index.intersection(global_de_df_index))
+
+#Only get rows from diff exp dataframe that are in expression dataframe
+subsetted_global_de_df = global_de_df.loc[global_mean_df_index]
+
+### Merge the de and expression average matrices together so that the cells are merged results, comma delmited
+merged_final_df = global_mean_df.astype(str).add(',').add(subsetted_global_de_df.astype(str))
+
+#Move the geneID from index to its own column
+merged_final_df = merged_final_df.reset_index()
+
+#Rename from 'index' to '#geneID'
+merged_final_df.rename(columns={'index':'#GeneID'}, inplace=True)
+
+#Print length of the final dataframe
+print('%i genes in merged final dataframe' % len(merged_final_df.index))
 
 
 
@@ -718,28 +593,19 @@ if len(condition_expDict.keys()) > 0 and len(deDict.keys()) > 0:
 ####WRITE OUT THE OVERALL EXPRESSION FILE
 ################################################
 
-#Output file name to be written to
+print('##### WRITE OUT GENE EXPRESSION FILE')
+
 total_expfile = outdir + 'Genes_expression.txt'
-total_expFile = open(total_expfile, 'w')
-print('Writing total expression data to:\n%s' % total_expfile + '\n\n')
+print('Writing total DE data to:\n%s' % total_expfile, '\n\n')
 
-#Write header line first
-total_expFile.write('#GeneID')
-for sample in sampleDict.keys():
-	total_expFile.write('\t%s' % sample) #tab delimited, write out conditions to headerline
-total_expFile.write('\n') #Write new line once header line is done being written out
+#Move the geneID from index to its own column
+exp_data_table = exp_data_table.reset_index()
 
+#Rename from 'index' to '#geneID'
+exp_data_table.rename(columns={'index':'#GeneID'}, inplace=True)
 
-#Now write out the expression data
-for geneID in sample_expDict.keys():
-	outLine = [] #Line to ultimately write out
-	outLine.append(geneID)  #append the gene ID
-	for sample in sampleDict.keys(): #For each condition we'll append the gene expression value in that condition
-		outLine.append(sample_expDict[geneID][sample])
-	#Now write the outline to the outfile
-	total_expFile.write('\t'.join(map(str,outLine)) + '\n')
-#print('\t\tDone writing the expression file...')
-total_expFile.close()
+#Write out using pandas df.to_csv function
+exp_data_table.to_csv(total_expfile, sep='\t', index=False)
 
 
 
@@ -747,32 +613,14 @@ total_expFile.close()
 ####WRITE OUT THE GLOBAL DIFFERENTIAL EXPRESSION FILE
 ################################################
 
+print('##### WRITE OUT DIFFERENTIAL EXPRESSION FILE')
+
 #Output file name to be written to
 total_DEfile = outdir + 'DE_experiments.txt'
-total_DEFile = open(total_DEfile, 'w')
 print('Writing total DE data to:\n%s' % total_DEfile, '\n\n')
 
-
-#Write headerline
-total_DEFile.write('#GeneID')
-for condition in de_conditions:
-	total_DEFile.write('\t%s' % condition) #tab delimited, write out conditions to headerline
-total_DEFile.write('\n') #Write new line once header line is done being written out
-
-
-#Now add the gene expression data
-for geneID in deDict.keys():
-	lineOut = []
-	#To first column write the gene ID
-	lineOut.append(geneID)
-	
-	#for each condition, get the expression stats
-	for condition in de_conditions:
-		averageExpression, pvalue, FDR, logFC = float(deDict[geneID][condition][0]), float(deDict[geneID][condition][1]), float(deDict[geneID][condition][2]), float(deDict[geneID][condition][3])
-		lineOut.append('%f,%f,%f,%f' % (averageExpression, pvalue, FDR, logFC))
-	total_DEFile.write('\t'.join(map(str,lineOut)) + '\n')
-#print('\t\tDone writing to differential expression outfile...')
-total_DEFile.close()	
+#Write out using pandas df.to_csv function
+merged_final_df.to_csv(total_DEfile, sep='\t', index=False)
 
 
 
