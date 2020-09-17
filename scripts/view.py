@@ -200,6 +200,10 @@ class View:
         '''Pad or truncate columns in text lines based on guide'''
         rows = []
 
+        #Sort by column with query count, in reverse order
+        data.sort(key=lambda x: x[4], reverse=True)
+        
+        
         for r in range(len(data)):
             row = ''
 
