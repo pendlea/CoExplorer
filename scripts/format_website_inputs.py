@@ -285,6 +285,8 @@ out_homologfile = outdir + 'Genes_homologs.txt'
 out_homologFile = open(out_homologfile, 'w')
 print('Will write the extracted annotation information to:\n %s' % out_homologfile, '\n')
 
+
+#If homolog file is provided, let's parse it
 if homologFile != '':
 	print('\n' + 'Processing the annotation file: \n %s ' % homologFile +  '\n')
 	print('Will extract columns: %s ' % homologFileColumns)
@@ -299,75 +301,34 @@ if homologFile != '':
 	#In case the user put quotation marks, get rid of them
 	homologFileColumns = str(homologFileColumns.replace('"', '').replace("'", ""))
 
-	columnsToExtract = [] # set equal to zero
-	
-	#If user wants all columns, then define columnsExtract as equal to all columns
-	#    (excluding first column == geneID) to end of headerline
-	if homologFileColumns == 'all':
-		for line in open(homologFile, 'r'):
-			for i in range(1, len(line.split('\t'))):
-				columnsToExtract.append(i)
-			break
-		print(columnsToExtract)
-		
-	else:
-		homologFileColumns = homologFileColumns.replace('"','') #replace space if given by user 
-		homologFileColumns = homologFileColumns.replace(' ','') #replace space if given by user 
-		#If only one column given
-		if ',' not in homologFileColumns:
-			columnsToExtract.append(int(homologFileColumns))
-		#If more than one column given, then split by comma and append each entry
-		else:
-			for i in homologFileColumns.split(','):
-				columnsToExtract.append(int(i))
-			print(columnsToExtract)	
-		
-	#### Now that we've determined the number of columns to extract, now lets extract 
-	####    the data from the annotation file
-	lineCount = 0 
-	for line in open(homologFile, 'r'):
-		lineCount += 1
-		
-		#skip header line
-		if '#' == line[0] or lineCount ==1:
-			line=line.rstrip().split('\t')
-			#Write out "GeneID" as first column's header
-			out_homologFile.write('#GeneID\t')
-			for c in columnsToExtract[1:]:
-				out_homologFile.write(line[c-1] + '\t') #You want column -1, as this "index-speak" in python
-			out_homologFile.write('\n')
-			continue
-		
-		line=line.rstrip().split('\t') #Strip and split line
-		#First write the gene
-		
-		for c in columnsToExtract:
-			#if for some reason this data point is missing in the in file, simply 
-			#   write out a tab
-			if len(line) < c:
-				out_homologFile.write('\t')
-			#if the data is there, then add it 
-			else:
-				homologID = line[c-1]
-				
-				#TODO - remove upon release
-				if homologID != '':
-					if 'Sevir' not in homologID and 'Svm' not in homologID:					
-						#Remove the . from the gene name
-						homologID = homologID.split('.')[0]
-					
-				#Also, for rice, remove the LOC in the name
-				#TODO - remove upon release
-				if 'LOC_' in line[c-1]:
-					homologID = homologID.replace('LOC_','')
-				out_homologFile.write(homologID + '\t') #You want column -1, as this "index-speak" in python
-				
-		#Now finish with writing out a new line
-		out_homologFile.write('\n')
-	out_homologFile.close()
-	
+	#Use provided columns to produce string of which columns to extract
+	extractString = []
+	for c in homologFileColumns.split(','):
+		#Subtract one from the column number to become the index
+		extractString.append(int(c)-1)
+	print('Extracting columns from homolog file: ',  extractString)
+
+
+	#Read in the homolog File with pandas
+	homolog_data_table = pd.read_csv(homologFile, delimiter='\t')
+
+
+	#Rewrite to the subsetted table with columns to extract only
+	homolog_data_table = homolog_data_table.iloc[:, extractString]
+
+	#Ensure each comma has a space after it for viewing in website tables
+	homolog_data_table = homolog_data_table.replace({',': ', '}, regex=True)
+
+	#Rename first column
+	homolog_data_table = homolog_data_table.rename(columns={ homolog_data_table.columns[0]: "#GeneID" })
+
+	#Write to outfile
+	homolog_data_table.to_csv(out_homologfile, sep='\t', index=False)
+
+
 else:
 	print('\nNo homologs file to parse')
+
 
 
 
@@ -397,6 +358,9 @@ global_de_df = pd.DataFrame()
 
 #Track how many samples/condition DE that has been processed
 sampleCount = 0 
+
+#Clear
+genes = []
 
 #If not an empty variable, then start parsing
 if de_fileList != '':
@@ -516,11 +480,14 @@ print('\n\n\n', '####### MEAN EXPRESSION CALCULATIONS', '\n')
 #expressionFile = '/depot/jwisecav/data/pendlea/coexpression_assessments/development/52_conditions_newpipeline/Setaria_A10_normalized_vst_transformed.matrix'
 expressionFile = options.exp_matrix
 
-#Read in gene expression matrix using pandas
-exp_data_table = pd.read_csv(expressionFile, delimiter='\t')
 
-
+#If the user did provide an expression file, then lets process it!
 if expressionFile != '':
+
+	#Read in gene expression matrix using pandas
+	exp_data_table = pd.read_csv(expressionFile, delimiter='\t')
+
+
 	#Create an empty dataframe to store the global (i.e. all conditions) gene average expression levels
 	global_mean_df = pd.DataFrame()
 
@@ -543,15 +510,15 @@ if expressionFile != '':
 	#Sort the dataframe by gene name (i.e. index) for merging with de dataframe
 	global_mean_df = global_mean_df.sort_index()
 
+	#Now report how many genes expression data was stored:
+	print('%i genes stored in expression dataframe' % len(global_mean_df.index))
 
 	
 #else, skip as there's no file to parse
 else:
+	
 	print('\nNo quantification of expression description/path file to parse')
 
-#Now report how many genes expression data was stored:
-if len(global_mean_df.index) > 0: #If there's even a populated dataframe, report gene count
-	print('%i genes stored in expression dataframe' % len(global_mean_df.index))
 
 
 
@@ -560,31 +527,32 @@ if len(global_mean_df.index) > 0: #If there's even a populated dataframe, report
 ##### MERGE THE DE AND EXPRESSION DATAFRAMES
 ################################################
 
+#If the user did provide an expression file, then lets process it!
+if expressionFile != '' and de_fileList != '':
+	global_mean_df_index = global_mean_df.index
 
-global_mean_df_index = global_mean_df.index
+	print('%i genes in global gene expression dataframe' % len(global_mean_df.index))
 
-print('%i genes in global gene expression dataframe' % len(global_mean_df.index))
+	global_de_df_index = global_de_df.index
+	print('%i genes in global differential expression dataframe' % len(global_de_df.index))
 
-global_de_df_index = global_de_df.index
-print('%i genes in global differential expression dataframe' % len(global_de_df.index))
+	#Find intersection between two so 
+	len(global_mean_df_index.intersection(global_de_df_index))
 
-#Find intersection between two so 
-len(global_mean_df_index.intersection(global_de_df_index))
+	#Only get rows from diff exp dataframe that are in expression dataframe
+	subsetted_global_de_df = global_de_df.loc[global_mean_df_index]
 
-#Only get rows from diff exp dataframe that are in expression dataframe
-subsetted_global_de_df = global_de_df.loc[global_mean_df_index]
+	### Merge the de and expression average matrices together so that the cells are merged results, comma delmited
+	merged_final_df = global_mean_df.astype(str).add(',').add(subsetted_global_de_df.astype(str))
 
-### Merge the de and expression average matrices together so that the cells are merged results, comma delmited
-merged_final_df = global_mean_df.astype(str).add(',').add(subsetted_global_de_df.astype(str))
+	#Move the geneID from index to its own column
+	merged_final_df = merged_final_df.reset_index()
 
-#Move the geneID from index to its own column
-merged_final_df = merged_final_df.reset_index()
+	#Rename from 'index' to '#geneID'
+	merged_final_df.rename(columns={'index':'#GeneID'}, inplace=True)
 
-#Rename from 'index' to '#geneID'
-merged_final_df.rename(columns={'index':'#GeneID'}, inplace=True)
-
-#Print length of the final dataframe
-print('%i genes in merged final dataframe' % len(merged_final_df.index))
+	#Print length of the final dataframe
+	print('%i genes in merged final dataframe' % len(merged_final_df.index))
 
 
 
@@ -596,31 +564,36 @@ print('%i genes in merged final dataframe' % len(merged_final_df.index))
 print('##### WRITE OUT GENE EXPRESSION FILE')
 
 total_expfile = outdir + 'Genes_expression.txt'
-print('Writing total DE data to:\n%s' % total_expfile, '\n\n')
 
-#Move the geneID from index to its own column
-exp_data_table = exp_data_table.reset_index()
+if expressionFile != '':
+	print('Writing total DE data to:\n%s' % total_expfile, '\n\n')
 
-#Rename from 'index' to '#geneID'
-exp_data_table.rename(columns={'index':'#GeneID'}, inplace=True)
+	#Move the geneID from index to its own column
+	exp_data_table = exp_data_table.reset_index()
 
-#Write out using pandas df.to_csv function
-exp_data_table.to_csv(total_expfile, sep='\t', index=False)
+	#Rename from 'index' to '#geneID'
+	exp_data_table.rename(columns={'index':'#GeneID'}, inplace=True)
 
+	#Write out using pandas df.to_csv function
+	exp_data_table.to_csv(total_expfile, sep='\t', index=False)
 
+else:
+	print('No expression file provided, only empty Genes_expression.txt being created')
 
 ################################################
 ####WRITE OUT THE GLOBAL DIFFERENTIAL EXPRESSION FILE
 ################################################
 
-print('##### WRITE OUT DIFFERENTIAL EXPRESSION FILE')
+if expressionFile != '' and de_fileList != '':
 
-#Output file name to be written to
-total_DEfile = outdir + 'DE_experiments.txt'
-print('Writing total DE data to:\n%s' % total_DEfile, '\n\n')
+	print('##### WRITE OUT DIFFERENTIAL EXPRESSION FILE')
 
-#Write out using pandas df.to_csv function
-merged_final_df.to_csv(total_DEfile, sep='\t', index=False)
+	#Output file name to be written to
+	total_DEfile = outdir + 'DE_experiments.txt'
+	print('Writing total DE data to:\n%s' % total_DEfile, '\n\n')
+
+	#Write out using pandas df.to_csv function
+	merged_final_df.to_csv(total_DEfile, sep='\t', index=False)
 
 
 
