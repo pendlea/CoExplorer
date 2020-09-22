@@ -190,8 +190,9 @@ class Model:
         qry_gen     = list(self.filter_results) # Create list of valid gene IDs (dictionay's keys)
         qry_gen_set = set(qry_gen)
         disp_data   = [] # Create list of module records (lists with all fields as strings) for display
-        value_data  = [] # Create list of tupeles (module,recovered) corresponding to disp_data
-
+        value_data  = [] # Create list of tuples (module,recovered) corresponding to disp_data
+        num_qry_mod_data = [] #Create list of tuples with number of query genes in each module
+        
         # Read thru module summary file, selecting data, and write to module output file
 
         # NOTE Assumes dir name is exact same as select option.
@@ -231,12 +232,19 @@ class Model:
 
                 # Add to download string
                 self.module_download_data += '\t'.join(output_fields) + '\n'
-
+                
                 # Add to return values (for select widget)
                 disp_data.append(output_fields[:-2]) # Data user will see. Hide last col, tho is used in export/download
                 value_data.append((line[0],list(recovered))) # Data used if line is selected for network plotting
-
-        return (disp_data,value_data)
+                num_qry_mod_data.append(num_qry_mod)
+                
+        #Sort all arrays based on number of query genes in module
+        sorted_disp_data = [x for _, x in sorted(zip(num_qry_mod_data,disp_data), key=lambda pair: pair[0], reverse=True)]
+        sorted_value_data = [x for _, x in sorted(zip(num_qry_mod_data,value_data), key=lambda pair: pair[0], reverse=True)]
+        sorted_num_qry_mod_data = sorted(num_qry_mod_data, reverse=True)
+        
+        
+        return (sorted_disp_data,sorted_value_data)
 
     def clear_filter_results(self):
         self.filter_results = {}

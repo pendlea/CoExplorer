@@ -18,17 +18,9 @@ class View:
     WELCOME2_TITLE = 'Methods'
     WELCOME2_TEXT  = '''
     <b>Gene Differential Expression Analysis</b>
-    <p>Three prime end sequencing data was obtained for 397 Setaria viridis cultivar ME034V
-    samples from leaf, sheath, and root tissue. Each library was subsequently trimmed and
-    quality filtered using Trimmomatic v0.36 (Bolger, Lohse, and Usadel 2014) to remove the
-    TruSeq three prime adapter, trim the first three bp and last six bp (due to drops in
-    quality scores), perform sliding window quality filtration (4 bp step size, average
-    quality score of 20), filter reads with final whole-read quality scores less than twenty,
-    and filter reads with final minimum read lengths less than 50 bp. Libraries of poor
-    quality, as determined by FASTQC (Andrews 2010), or with less than 1.5 million reads were
-    eliminated from the downstream analysis. Following these filtrations, 354 samples remained
-    for processing through differential expression and co-expression network analyses (see table
-     under the ‘Samples’ tab for the full list of samples and their descriptions)</p>
+    <p>
+    ARABIDOPSIS METHODS HERE
+    </p>
     <p>Quantification of expression was performed using Kallisto (--single --single-overhang -l
     200 -s 30 -t 5; Bray et al. 2016) using version 2.0 of the ME034V gene annotation set
     (unpublished), an improvement on the ME034V version 1.0 (Thielen and Pendleton et al. 2020).
@@ -66,8 +58,8 @@ class View:
     SAMPLES1_TITLE = 'Samples'
     FILTER1_TITLE  = 'Filter by Gene ID'
     #FILTER1_TEXT   = '<b>Provide either Setaria or Arabidopsis gene IDs</b>'
-    FILTER1_TEXT   = '<b>Provide Setaria viridis ME034V gene IDs (eg: Svm7G0018960). </b>'
-    FILTER1_TEXT_2 = 'You can also search for OrthoFinder-identified orthologs in ME034V to the following species/genomes: S. viridis A10 (eg: Sevir.5G400800), S. italica (eg: Seita.1G019400), sorghum (eg: Sobic.006G004700), rice (eg: Os03g27570), corn (eg: Zm00001d024902), Arabidopsis (eg: AT2G46040). Search with single gene, or comma-separated list of genes.'
+    FILTER1_TEXT   = '<b>Provide Arabidopsis thaliana gene IDs (eg: AT4G13615). </b>'
+    FILTER1_TEXT_2 = 'You can also search for OrthoFinder-identified orthologs to the following species/genomes: Setaria viridis ME034V (e.g. Svm5G0050410), Setaria viridis A10 (eg: Sevir.5G400800), S. italica (eg: Seita.1G019400), sorghum (eg: Sobic.006G004700), rice (eg: Os03g27570), corn (eg: Zm00001d024902), Arabidopsis (eg: AT2G46040). Search with single gene, or comma-separated list of genes.'
     FILTER1_HINT   = 'e.g. Sevir.5G400800, AT1G44575'
     FILTER2_TITLE  = 'Filter by Function'
     #FILTER2_TEXT   = '<b>Provide either GO ID or KEGG PATHWAY ID</b>'
@@ -201,7 +193,7 @@ class View:
         rows = []
 
         #Sort by column with query count, in reverse order
-        data.sort(key=lambda x: x[4], reverse=True)
+        #data.sort(key=lambda x: x[4], reverse=True)
         
         
         for r in range(len(data)):
