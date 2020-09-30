@@ -19,7 +19,15 @@ class View:
     WELCOME2_TEXT  = '''
     <b>Gene Differential Expression Analysis</b>
     <p>
-    ARABIDOPSIS METHODS HERE
+    Three prime end sequencing data was obtained for 397 Setaria viridis cultivar ME034V samples from leaf, sheath, 
+    and root tissue. Each library was subsequently trimmed and quality filtered using Trimmomatic v0.36 (Bolger, Lohse, 
+    and Usadel 2014) to remove the TruSeq three prime adapter, trim the first three bp and last six bp (due to drops in 
+    quality scores), perform sliding window quality filtration (4 bp step size, average quality score of 20), filter 
+    reads with final whole-read quality scores less than twenty, and filter reads with final minimum read lengths 
+    less than 50 bp. Libraries of poor quality, as determined by FASTQC (Andrews 2010), or with less than 1.5 million 
+    reads were eliminated from the downstream analysis. Following these filtrations, 354 samples remained for processing 
+    through differential expression and co-expression network analyses (see table under the ‘Samples’ tab for the full 
+    list of samples and their descriptions)
     </p>
     <p>Quantification of expression was performed using Kallisto (--single --single-overhang -l
     200 -s 30 -t 5; Bray et al. 2016) using version 2.0 of the ME034V gene annotation set
