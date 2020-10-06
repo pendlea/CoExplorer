@@ -134,7 +134,7 @@ class Plotter:
         # Network plot widget =========================================================
 
         # Prep edge traces for later use
-        """
+        
         # 3D PLOTTING NETWORKS
         edge_trace = go.Scatter3d(
             x         = [],
@@ -184,8 +184,8 @@ class Plotter:
                 ,width  = self.NET_WIDTH
             )
         )
-        """
         
+        """
         #2D PLOTTING NETWORKS
         edge_trace = go.Scatter(
             x         = [],
@@ -241,6 +241,8 @@ class Plotter:
                 ,width  = self.NET_WIDTH
             )
         )
+    """
+        
     def out_plot_msg(self,output_widget,text):
         '''Replace current plot output with message'''
         with output_widget:
@@ -458,10 +460,10 @@ class Plotter:
         # Clear plot of any previous data
         edge_trace.x    = []
         edge_trace.y    = []
-        #edge_trace.z    = []
+        edge_trace.z    = []
         node_trace.x    = []
         node_trace.y    = []
-        #node_trace.z    = []
+        node_trace.z    = []
         node_trace.text = []
 
         # Create networkX graph
@@ -475,8 +477,8 @@ class Plotter:
             x1,y1,z1         = pos[edge[1]]
             edge_trace['x'] += tuple([x0,x1,None])
             edge_trace['y'] += tuple([y0,y1,None])
-            #edge_trace['z'] += tuple([z0,z1,None])
-
+            edge_trace['z'] += tuple([z0,z1,None])
+        """
         #Differentially weight the line thickness based on the edge weights
         exlarge = [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] >= 0.8]
         elarge =  [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] > 0.5 and d['weight'] < 0.80]
@@ -489,13 +491,13 @@ class Plotter:
                            width=0.8, edge_color='darkgray')
         nx.draw_networkx_edges(G, pos, edgelist=esmall,
                            width=0.2, edge_color='gray')
-        
+        """
         # Add xy positions of each node/gene
         for node in G.nodes():
             x,y,z            = pos[node]
             node_trace['x'] += tuple([x])
             node_trace['y'] += tuple([y])
-            #node_trace['z'] += tuple([z]) #3D PLOTTING 
+            node_trace['z'] += tuple([z]) #3D PLOTTING 
 
         # Highlight selected genes
 
