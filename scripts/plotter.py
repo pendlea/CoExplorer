@@ -134,6 +134,8 @@ class Plotter:
         # Network plot widget =========================================================
 
         # Prep edge traces for later use
+        """
+        # 3D PLOTTING NETWORKS
         edge_trace = go.Scatter3d(
             x         = [],
             y         = [],
@@ -155,7 +157,56 @@ class Plotter:
                 ,size  = self.NET_MARKER_SIZE
             )
         )
+        
+        # Create network widget
+        self.net_plot = go.FigureWidget(
+            data        = [edge_trace,node_trace]
+            ,layout     = go.Layout(
+                title        = self.NET_INIT_TITLE
+                ,titlefont   = dict(size=self.NET_TITLE_FONT_SIZE)
+                ,showlegend  = False
+                ,hovermode   = 'closest'
+                ,margin      = self.NET_MARGIN
+                ,annotations = [ dict(
+                        text       = self.NET_CREDIT
+                        ,showarrow = False
+                        ,xref      = 'paper', yref = 'paper'
+                        ,x         = self.NET_ANNO_X
+                        ,y         = self.NET_ANNO_X
+                ) ]
+                ,plot_bgcolor  = self.NET_BACKGROUND
+                ,scene         = dict(
+                                    xaxis  = dict(axis)
+                                    ,yaxis = dict(axis)
+                                    ,zaxis = dict(axis)
+                )
+                ,height = self.NET_HEIGHT
+                ,width  = self.NET_WIDTH
+            )
+        )
+        """
+        
+        #2D PLOTTING NETWORKS
+        edge_trace = go.Scatter(
+            x         = [],
+            y         = [],
+            line      = dict(width=self.NET_EDGE_WITH,color=self.NET_EDGE_COLOR),
+            hoverinfo = 'none',
+            mode      = 'lines')
 
+        # Prep node traces for later use
+        node_trace = go.Scatter(
+            x          = []
+            ,y         = []
+            ,text      = []
+            ,mode      = 'markers'
+            ,hoverinfo = 'text'
+            ,marker    = dict(
+                color  = []
+                ,size  = self.NET_MARKER_SIZE
+            )
+        )
+        
         axis = dict(
             showbackground  = False
             ,showline       = False
@@ -185,13 +236,11 @@ class Plotter:
                 ,scene         = dict(
                                     xaxis  = dict(axis)
                                     ,yaxis = dict(axis)
-                                    ,zaxis = dict(axis)
                 )
                 ,height = self.NET_HEIGHT
                 ,width  = self.NET_WIDTH
             )
         )
-
     def out_plot_msg(self,output_widget,text):
         '''Replace current plot output with message'''
         with output_widget:
@@ -409,15 +458,16 @@ class Plotter:
         # Clear plot of any previous data
         edge_trace.x    = []
         edge_trace.y    = []
-        edge_trace.z    = []
+        #edge_trace.z    = []
         node_trace.x    = []
         node_trace.y    = []
-        node_trace.z    = []
+        #node_trace.z    = []
         node_trace.text = []
 
         # Create networkX graph
         G   = nx.read_weighted_edgelist(abc_path)
-        pos = nx.spring_layout(G,dim=3) # This is a randomized layout of the network
+        # Create 2D positions of network plot
+        pos = nx.spring_layout(G,dim=2) # This is a randomized layout of the network
 
         # Edge traces
         for edge in G.edges():
@@ -425,14 +475,27 @@ class Plotter:
             x1,y1,z1         = pos[edge[1]]
             edge_trace['x'] += tuple([x0,x1,None])
             edge_trace['y'] += tuple([y0,y1,None])
-            edge_trace['z'] += tuple([z0,z1,None])
+            #edge_trace['z'] += tuple([z0,z1,None])
 
+        #Differentially weight the line thickness based on the edge weights
+        exlarge = [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] >= 0.8]
+        elarge =  [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] > 0.5 and d['weight'] < 0.80]
+        esmall =  [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] <= 0.5]
+
+        #Draw network edges with varying line weights that reflect edge weights
+        nx.draw_networkx_edges(G, pos, edgelist=exlarge,
+                           width=1.4, edge_color='darkgray')
+        nx.draw_networkx_edges(G, pos, edgelist=elarge,
+                           width=0.8, edge_color='darkgray')
+        nx.draw_networkx_edges(G, pos, edgelist=esmall,
+                           width=0.2, edge_color='gray')
+        
         # Add xy positions of each node/gene
         for node in G.nodes():
             x,y,z            = pos[node]
             node_trace['x'] += tuple([x])
             node_trace['y'] += tuple([y])
-            node_trace['z'] += tuple([z])
+            #node_trace['z'] += tuple([z]) #3D PLOTTING 
 
         # Highlight selected genes
 
@@ -449,5 +512,6 @@ class Plotter:
             node_trace['text'] += tuple([self.build_annotation_text(annos,gene_id)])
 
         node_trace['marker']['color'] = colors
+        
         self.net_plot.layout.title = self.NET_PREFIX_TITLE + module_id
 
