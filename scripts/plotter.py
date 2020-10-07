@@ -135,7 +135,6 @@ class Plotter:
 
         # Prep edge traces for later use
         
-        # 3D PLOTTING NETWORKS
         edge_trace = go.Scatter3d(
             x         = [],
             y         = [],
@@ -184,64 +183,6 @@ class Plotter:
                 ,width  = self.NET_WIDTH
             )
         )
-        
-        """
-        #2D PLOTTING NETWORKS
-        edge_trace = go.Scatter(
-            x         = [],
-            y         = [],
-            line      = dict(width=self.NET_EDGE_WITH,color=self.NET_EDGE_COLOR),
-            hoverinfo = 'none',
-            mode      = 'lines')
-
-        # Prep node traces for later use
-        node_trace = go.Scatter(
-            x          = []
-            ,y         = []
-            ,text      = []
-            ,mode      = 'markers'
-            ,hoverinfo = 'text'
-            ,marker    = dict(
-                color  = []
-                ,size  = self.NET_MARKER_SIZE
-            )
-        )
-        
-        axis = dict(
-            showbackground  = False
-            ,showline       = False
-            ,zeroline       = False
-            ,showgrid       = False
-            ,showticklabels = False
-            ,title          = ''
-        )
-
-        # Create network widget
-        self.net_plot = go.FigureWidget(
-            data        = [edge_trace,node_trace]
-            ,layout     = go.Layout(
-                title        = self.NET_INIT_TITLE
-                ,titlefont   = dict(size=self.NET_TITLE_FONT_SIZE)
-                ,showlegend  = False
-                ,hovermode   = 'closest'
-                ,margin      = self.NET_MARGIN
-                ,annotations = [ dict(
-                        text       = self.NET_CREDIT
-                        ,showarrow = False
-                        ,xref      = 'paper', yref = 'paper'
-                        ,x         = self.NET_ANNO_X
-                        ,y         = self.NET_ANNO_X
-                ) ]
-                ,plot_bgcolor  = self.NET_BACKGROUND
-                ,scene         = dict(
-                                    xaxis  = dict(axis)
-                                    ,yaxis = dict(axis)
-                )
-                ,height = self.NET_HEIGHT
-                ,width  = self.NET_WIDTH
-            )
-        )
-    """
         
     def out_plot_msg(self,output_widget,text):
         '''Replace current plot output with message'''
@@ -468,7 +409,7 @@ class Plotter:
 
         # Create networkX graph
         G   = nx.read_weighted_edgelist(abc_path)
-        # Create 2D positions of network plot
+        # Create 3D positions of network plot
         pos = nx.spring_layout(G,dim=2) # This is a randomized layout of the network
 
         # Edge traces
@@ -478,26 +419,13 @@ class Plotter:
             edge_trace['x'] += tuple([x0,x1,None])
             edge_trace['y'] += tuple([y0,y1,None])
             edge_trace['z'] += tuple([z0,z1,None])
-        """
-        #Differentially weight the line thickness based on the edge weights
-        exlarge = [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] >= 0.8]
-        elarge =  [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] > 0.5 and d['weight'] < 0.80]
-        esmall =  [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] <= 0.5]
-
-        #Draw network edges with varying line weights that reflect edge weights
-        nx.draw_networkx_edges(G, pos, edgelist=exlarge,
-                           width=1.4, edge_color='darkgray')
-        nx.draw_networkx_edges(G, pos, edgelist=elarge,
-                           width=0.8, edge_color='darkgray')
-        nx.draw_networkx_edges(G, pos, edgelist=esmall,
-                           width=0.2, edge_color='gray')
-        """
+        
         # Add xy positions of each node/gene
         for node in G.nodes():
             x,y,z            = pos[node]
             node_trace['x'] += tuple([x])
             node_trace['y'] += tuple([y])
-            node_trace['z'] += tuple([z]) #3D PLOTTING 
+            node_trace['z'] += tuple([z])
 
         # Highlight selected genes
 
