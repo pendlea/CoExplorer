@@ -157,6 +157,15 @@ class Plotter:
             )
         )
         
+        axis = dict(
+            showbackground  = False
+            ,showline       = False
+            ,zeroline       = False
+            ,showgrid       = False
+            ,showticklabels = False
+            ,title          = ''
+        )
+        
         # Create network widget
         self.net_plot = go.FigureWidget(
             data        = [edge_trace,node_trace]
