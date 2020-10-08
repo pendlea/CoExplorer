@@ -134,7 +134,6 @@ class Plotter:
         # Network plot widget =========================================================
 
         # Prep edge traces for later use
-        
         edge_trace = go.Scatter3d(
             x         = [],
             y         = [],
@@ -156,7 +155,7 @@ class Plotter:
                 ,size  = self.NET_MARKER_SIZE
             )
         )
-        
+
         axis = dict(
             showbackground  = False
             ,showline       = False
@@ -165,7 +164,7 @@ class Plotter:
             ,showticklabels = False
             ,title          = ''
         )
-        
+
         # Create network widget
         self.net_plot = go.FigureWidget(
             data        = [edge_trace,node_trace]
@@ -192,7 +191,7 @@ class Plotter:
                 ,width  = self.NET_WIDTH
             )
         )
-        
+
     def out_plot_msg(self,output_widget,text):
         '''Replace current plot output with message'''
         with output_widget:
@@ -345,7 +344,7 @@ class Plotter:
 
                     # Create plot for this gene
 
-                    fig,ax = plt.subplots(figsize=(12,8))
+                    fig,ax = plt.subplots(figsize=(20,12))
                     g      = sns.barplot(x=fchanges,y=conds,palette=palette)  # horizontal bar chart
 
                     # Set xaxis limits based on abs value of max fold change for gene
@@ -418,8 +417,7 @@ class Plotter:
 
         # Create networkX graph
         G   = nx.read_weighted_edgelist(abc_path)
-        # Create 3D positions of network plot
-        pos = nx.spring_layout(G,dim=2) # This is a randomized layout of the network
+        pos = nx.spring_layout(G,dim=3) # This is a randomized layout of the network
 
         # Edge traces
         for edge in G.edges():
@@ -428,7 +426,7 @@ class Plotter:
             edge_trace['x'] += tuple([x0,x1,None])
             edge_trace['y'] += tuple([y0,y1,None])
             edge_trace['z'] += tuple([z0,z1,None])
-        
+
         # Add xy positions of each node/gene
         for node in G.nodes():
             x,y,z            = pos[node]
@@ -451,6 +449,5 @@ class Plotter:
             node_trace['text'] += tuple([self.build_annotation_text(annos,gene_id)])
 
         node_trace['marker']['color'] = colors
-        
         self.net_plot.layout.title = self.NET_PREFIX_TITLE + module_id
 
